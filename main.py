@@ -180,27 +180,35 @@ def searchPULs(maxDist = 10):
     for pul in foundPULs:
         borderLow = pul[1][0]
         borderHigh = pul[1][1]
-        print("--------------")
         PULrecords.append([blast_records[i] for i in range(borderLow, borderHigh+1)])
-        while borderLow < borderHigh + 1:
-            print([x.hit_def for x in blast_records[borderLow].alignments])
-            print(blast_records[borderLow].originalIndex)
-            borderLow += 1
     return PULrecords
 
 
 
 
+def countSubstrateExamples():
+    file = open("izClankovZAccZimeni.fasta")
+    cnt = 0
+    examples = {}
+    for line in file:
+        if line[0] == ">":
+            cnt += 1
+            substrate = line.split("|")[3].replace("\n", "")
+            if substrate in examples.keys(): examples[substrate] += 1
+            else: examples[substrate] = 1
+    print(examples)
+    print(cnt)
+    print(sum([examples[key] for key in examples.keys()]))
 
 
 
 
 
 if __name__ == '__main__':
-    resultsBLASTwrite("protein")
+    #resultsBLASTwrite("protein")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
-    searchPULs()
-
+    #searchPULs()
+    countSubstrateExamples()
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\Prevotella_sp._AGR2160.gbkU")
     # genomeSearch("B_ovatusGenome.fna")

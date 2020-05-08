@@ -11,6 +11,7 @@ from tkinter import filedialog
 
 import tkinter as tk
 import tkinter.ttk as ttk
+
 py3 = True
 
 import gui_support
@@ -23,27 +24,32 @@ def vp_start_gui():
     global val, w, root
     root = tk.Tk()
     gui_support.set_Tk_var()
-    top = Toplevel1 (root)
+    top = Toplevel1(root)
     gui_support.init(root, top)
     root.mainloop()
 
+
 w = None
+
+
 def create_Toplevel1(rt, *args, **kwargs):
     '''Starting point when module is imported by another module.
        Correct form of call: 'create_Toplevel1(root, *args, **kwargs)' .'''
     global w, w_win, root
-    #rt = root
+    # rt = root
     root = rt
-    w = tk.Toplevel (root)
+    w = tk.Toplevel(root)
     gui_support.set_Tk_var()
-    top = Toplevel1 (w)
+    top = Toplevel1(w)
     gui_support.init(w, top, *args, **kwargs)
     return (w, top)
+
 
 def destroy_Toplevel1():
     global w
     w.destroy()
     w = None
+
 
 class Toplevel1:
     global genomeResults
@@ -58,12 +64,14 @@ class Toplevel1:
     def validUserOut(self, userOut):
         try:
             a = int(userOut)
-            if a >= 0 and a <= 11: return a
-            else: return 5
+            if a >= 0 and a <= 11:
+                return a
+            else:
+                return 5
         except:
             return 5
 
-    def clickButton1(self):
+    def clickButton1(self, type):
         userSequence = self.Entry1.get()
         self.Entry1.delete(0, tk.END)
         selectedButton = gui_support.selectedButton.get()
@@ -76,39 +84,25 @@ class Toplevel1:
             userOut = self.validUserOut(self.EntryOutfmt.get())
             userEval = self.validUserEval(self.EntryEval.get())
             print(userOut, userEval)
-            if selectedButton == 1:
+            if type == "fasta":
                 genomeSearch(userSequence)
-                proteinBLAST("queryTempSequence.txt", eval = userEval)
-                resList = resultsBLASTwrite("protein")
+                proteinBLAST("queryTempSequence.txt", eval=userEval)
+                resList = searchPULs()
                 self.genomeResults = resList
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
-                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval = userEval, format = userOut,
+                self.writePULs()
+                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
-            elif selectedButton == 2:
-                nucleotideBLAST(userSequence, eval = userEval)
-                resList = resultsBLASTwrite("nucleotide")
-                self.genomeResults = resList
-                self.Entry1.delete(0, tk.END)
-                self.Entry1.insert(0, "processed")
-                if userOut != 5: nucleotideBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
-                                              outfile="UserRequestedBLASTres.txt")
-            elif selectedButton == 3:
-                proteinBLAST(userSequence, eval = userEval)
-                resList = resultsBLASTwrite("protein")
-                self.genomeResults = resList
-                self.Entry1.delete(0, tk.END)
-                self.Entry1.insert(0, "processed")
-                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval = userEval, format = userOut,
-                                              outfile="UserRequestedBLASTres.txt")
-            elif selectedButton == 4:
+            elif type == "gbk":
                 gbkGenomeSearch(userSequence)
                 proteinBLAST("queryTempSequence.txt", eval=userEval)
-                resList = resultsBLASTwrite("protein")
+                resList = searchPULs()
                 self.genomeResults = resList
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
-                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval = userEval, format = userOut,
+                self.writePULs()
+                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
             else:
                 self.Entry1.delete(0, tk.END)
@@ -120,7 +114,6 @@ class Toplevel1:
             try:
                 lng = len(self.genomeResults[type][key])
                 if lng > 0:
-                    print(len(self.genomeResults[type][key]))
                     self.Text1.insert("insert", key + ", " + str(lng) + " result(s) \n")
                     for i in range(0, lng):
                         writeout = "\t" + self.genomeResults[type][key][i]["name"] \
@@ -143,23 +136,40 @@ class Toplevel1:
             if x.strip() != "General" and len(x) > 3:
                 self.Text2.insert("insert", x + " ")
 
-    def clickRadio1(self):
-        print("button1",gui_support.selectedButton.get())
-        print("button2",gui_support.selectedGenus.get())
-        selected = gui_support.selectedButton.get()
-        type = gui_support.selectedGenus.get()
-        if selected != 0 and type in [4,5,6]:
-            self.Text1.delete(1.0, tk.END)
-            #print(self.genomeResults["B"]["myQuery_28560"])
-            if type == 4:
-                self.writeBlast("B")
-            elif type == 5:
-                self.writeBlast("P")
-            elif type == 6:
-                self.writeBlast("O")
+    def writePULs(self):
+        substrates = set()
+        self.Text1.delete(1.0, tk.END)
+        self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
+        for pul in self.genomeResults:
+            self.Text1.insert("insert", "-PUL match details-" + "\n")
+            for record in pul:
+                self.Text1.insert("insert", record.query + "\n")
+                for alignment in record.alignments:
+                    self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
+                    substrates.add(alignment.hit_def.split("|")[3])
+                    for hsp in alignment.hsps:
+                        self.Text1.insert("insert",
+                                          "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
+                        self.Text1.insert("insert", "\t" + "Identities: " +
+                                          str("{:.2f}".format(hsp.align_length/hsp.identities)) + "% (" +str(hsp.identities) + "), gaps: " +
+                                          str(hsp.gaps) + "\n")
+                        self.Text1.insert("insert", "\t" + "Query range: " + str(hsp.query_start) + "-" + str(
+                            hsp.query_end) + "\n")
+                        self.Text1.insert("insert", "\t" + "Match range: " + str(hsp.sbjct_start) + "-" + str(
+                            hsp.sbjct_end) + "\n")
+                        self.Text1.insert("insert", "\t" + hsp.query + "\n")
+                        self.Text1.insert("insert", "\t" + hsp.match + "\n")
+                        self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
+                        self.Text1.insert("insert", "\n")
+                # self.Text1.insert("insert", "\n")
+            self.Text1.insert("insert", "\n")
+        self.Text2.delete(1.0, tk.END)
+        for x in substrates:
+            if x.strip() != "General" and len(x) > 3:
+                self.Text2.insert("insert", x + " ")
 
     def askopenfile(self):
-        a = tk.filedialog.askopenfilename(title = "Select file")
+        a = tk.filedialog.askopenfilename(title="Select file")
         self.Entry1.delete(0, tk.END)
         self.Entry1.insert(0, a)
         gui_support.selectedButton.set(0)
@@ -168,7 +178,6 @@ class Toplevel1:
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
-
 
         top.geometry("693x635+781+143")
         top.minsize(148, 1)
@@ -205,44 +214,13 @@ class Toplevel1:
         self.Label4.configure(text='''(*optional)''')
 
         # input type
-        self.Radiobutton1 = ttk.Radiobutton(top, value = 1, command = self.clickButton1)
-        self.Radiobutton1.place(relx=0.034, rely=0.205, relheight=0.069)
-        self.Radiobutton1.configure(text='''Whole genome''')
-        self.Radiobutton1.configure(variable=gui_support.selectedButton)
+        self.ButtonF = ttk.Button(top, command=lambda: self.clickButton1("fasta"))
+        self.ButtonF.place(relx=0.25, rely=0.250, height=40, width = 150)
+        self.ButtonF.configure(text='''Whole genome''')
 
-        self.Radiobutton2 = ttk.Radiobutton(top, value = 2, command = self.clickButton1)
-        self.Radiobutton2.place(relx=0.234, rely=0.205, relheight=0.069)
-        self.Radiobutton2.configure(text='''Nucleotide sequence''')
-        self.Radiobutton2.configure(variable=gui_support.selectedButton)
-
-        self.Radiobutton3 = ttk.Radiobutton(top, value = 3, command = self.clickButton1)
-        self.Radiobutton3.place(relx=0.484, rely=0.205, relheight=0.069)
-        self.Radiobutton3.configure(text='''Protein sequence''')
-        self.Radiobutton3.configure(variable=gui_support.selectedButton)
-
-        self.Radiobutton4 = ttk.Radiobutton(top, value=4, command=self.clickButton1)
-        self.Radiobutton4.place(relx=0.684, rely=0.205, relheight=0.069)
-        self.Radiobutton4.configure(text='''GenBank genome''')
-        self.Radiobutton4.configure(variable=gui_support.selectedButton)
-
-        self.Laabel2 = ttk.Label(top)
-        self.Laabel2.place(relx=0.035, rely=0.300, height=37, width=110)
-        self.Laabel2.configure(text='''Comparison genus''')
-
-        self.Radiobutton11 = ttk.Radiobutton(top, value=4, command=self.clickRadio1)
-        self.Radiobutton11.place(relx=0.034, rely=0.355, relheight=0.069)
-        self.Radiobutton11.configure(text='''Bacteroides''')
-        self.Radiobutton11.configure(variable=gui_support.selectedGenus)
-
-        self.Radiobutton12 = ttk.Radiobutton(top, value=5, command=self.clickRadio1)
-        self.Radiobutton12.place(relx=0.234, rely=0.355, relheight=0.069)
-        self.Radiobutton12.configure(text='''Prevotella''')
-        self.Radiobutton12.configure(variable=gui_support.selectedGenus)
-
-        self.Radiobutton13 = ttk.Radiobutton(top, value=6, command=self.clickRadio1)
-        self.Radiobutton13.place(relx=0.484, rely=0.355, relheight=0.069)
-        self.Radiobutton13.configure(text='''Others''')
-        self.Radiobutton13.configure(variable=gui_support.selectedGenus)
+        self.ButtonG = ttk.Button(top, command=lambda: self.clickButton1("gbk"))
+        self.ButtonG.place(relx=0.5, rely=0.250, height=40, width = 150)
+        self.ButtonG.configure(text='''GenBank genome''')
 
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
         self.Text1.place(relx=0.034, rely=0.425, relheight=0.45, relwidth=0.907)
@@ -260,11 +238,6 @@ class Toplevel1:
         self.textHsb1.pack(side="bottom", fill="x")
         self.Text2.configure(xscrollcommand=self.textHsb1.set)
 
+
 if __name__ == '__main__':
     vp_start_gui()
-
-
-
-
-
-
