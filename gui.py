@@ -84,6 +84,9 @@ class Toplevel1:
             userOut = self.validUserOut(self.EntryOutfmt.get())
             userEval = self.validUserEval(self.EntryEval.get())
             print(userOut, userEval)
+            self.ComboBox["values"] = ["None"]
+            self.ComboBox.current(0)
+            self.Text1.delete(1.0, tk.END)
             if type == "fasta":
                 genomeSearch(userSequence)
                 proteinBLAST("queryTempSequence.txt", eval=userEval)
@@ -171,19 +174,17 @@ class Toplevel1:
         for pul in self.genomeResults:
             for record in pul:
                 for alignment in record.alignments: substrates.add(alignment.hit_def.split("|")[3].strip())
-        menu = self.Menu["menu"]
-        menu.delete(0, "end")
+        temp = []
         for string in substrates:
             if string.strip() == "General": continue
-            menu.add_command(label=string,
-                             command=lambda value=string: self.selectedSubstrate.set(value))
-        #self.substratesList = list(substrates)
-        #print(self.substratesList)
-        print(substrates)
+            temp.append(string)
+        self.ComboBox["values"] = temp
 
     def showSubstrate(self, *args):
-        print(self.selectedSubstrate.get())
-        self.writePULs(self.selectedSubstrate.get())
+        # print(self.ComboBox.current())
+        # print(self.ComboBox["values"][self.ComboBox.current()])
+        # print(self.ComboBox["values"])
+        self.writePULs((self.ComboBox["values"][self.ComboBox.current()]))
 
     def askopenfile(self):
         a = tk.filedialog.askopenfilename(title="Select file")
@@ -244,11 +245,12 @@ class Toplevel1:
         self.Label4 = ttk.Label(top)
         self.Label4.place(relx=0.29, rely=0.33, height=40, width = 150)
         self.Label4.configure(text='''Select substrate:''')
-        self.selectedSubstrate = tk.StringVar(top)
-        self.selectedSubstrate.set("-")
-        self.Menu = tk.OptionMenu(top, self.selectedSubstrate, *self.substratesList)
-        self.Menu.place(relx=0.5, rely=0.330, height=40, width = 150)
-        self.selectedSubstrate.trace("w", self.showSubstrate)
+
+        self.ComboBox = ttk.Combobox(top, state="readonly")
+        self.ComboBox["values"] = self.substratesList
+        self.ComboBox.current(0)
+        self.ComboBox.bind("<<ComboboxSelected>>", self.showSubstrate)
+        self.ComboBox.place(relx=0.5, rely=0.330, height=40, width=150)
 
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
         self.Text1.place(relx=0.034, rely=0.425, relheight=0.55, relwidth=0.907)
