@@ -163,15 +163,13 @@ def searchPULs(maxDist = 10):
     for candidate in possiblePULs:
         borderLow = min(candidate)
         borderHigh = max(candidate)
-        while True:
+        while borderLow-1 != 0:
             if abs(blast_records[borderLow-1].originalIndex - blast_records[min(candidate)].originalIndex) > maxDist: break
             if blast_records[borderLow-1].alignments[0].hit_def.split("|")[2] in ["SusC", "SusD"]: break
-            if borderLow-1 == 0: break
             borderLow = borderLow - 1
-        while True:
+        while borderHigh + 1 != len(blast_records):
             if abs(blast_records[borderHigh+1].originalIndex - blast_records[max(candidate)].originalIndex) > maxDist: break
             if blast_records[borderHigh+1].alignments[0].hit_def.split("|")[2] in ["SusC", "SusD"]: break
-            if borderHigh+1 == len(blast_records): break
             borderHigh = borderHigh + 1
         if borderHigh == max(candidate) and borderLow == min(candidate):continue
         foundPULs.append([(candidate), (borderLow, borderHigh)])

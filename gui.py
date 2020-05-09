@@ -91,7 +91,8 @@ class Toplevel1:
                 self.genomeResults = resList
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
-                self.writePULs()
+                #self.writePULs()
+                self.fillOptions()
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
             elif type == "gbk":
@@ -101,7 +102,8 @@ class Toplevel1:
                 self.genomeResults = resList
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
-                self.writePULs()
+                #self.writePULs()
+                self.fillOptions()
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
             else:
@@ -136,8 +138,7 @@ class Toplevel1:
             if x.strip() != "General" and len(x) > 3:
                 self.Text2.insert("insert", x + " ")
 
-    def writePULs(self):
-        substrates = set()
+    def writePULs(self, substrate):
         self.Text1.delete(1.0, tk.END)
         self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
         for pul in self.genomeResults:
@@ -145,8 +146,9 @@ class Toplevel1:
             for record in pul:
                 self.Text1.insert("insert", record.query + "\n")
                 for alignment in record.alignments:
+                    currentSubstrate = alignment.hit_def.split("|")[3].strip()
+                    if currentSubstrate != substrate and currentSubstrate != "General": break
                     self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
-                    substrates.add(alignment.hit_def.split("|")[3])
                     for hsp in alignment.hsps:
                         self.Text1.insert("insert",
                                           "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
@@ -163,10 +165,25 @@ class Toplevel1:
                         self.Text1.insert("insert", "\n")
                 # self.Text1.insert("insert", "\n")
             self.Text1.insert("insert", "\n")
-        self.Text2.delete(1.0, tk.END)
-        for x in substrates:
-            if x.strip() != "General" and len(x) > 3:
-                self.Text2.insert("insert", x + " ")
+
+    def fillOptions(self):
+        substrates = set()
+        for pul in self.genomeResults:
+            for record in pul:
+                for alignment in record.alignments: substrates.add(alignment.hit_def.split("|")[3].strip())
+        menu = self.Menu["menu"]
+        menu.delete(0, "end")
+        for string in substrates:
+            if string.strip() == "General": continue
+            menu.add_command(label=string,
+                             command=lambda value=string: self.selectedSubstrate.set(value))
+        #self.substratesList = list(substrates)
+        #print(self.substratesList)
+        print(substrates)
+
+    def showSubstrate(self, *args):
+        print(self.selectedSubstrate.get())
+        self.writePULs(self.selectedSubstrate.get())
 
     def askopenfile(self):
         a = tk.filedialog.askopenfilename(title="Select file")
@@ -216,27 +233,30 @@ class Toplevel1:
         # input type
         self.ButtonF = ttk.Button(top, command=lambda: self.clickButton1("fasta"))
         self.ButtonF.place(relx=0.25, rely=0.250, height=40, width = 150)
-        self.ButtonF.configure(text='''Whole genome''')
+        self.ButtonF.configure(text='''FASTA genome''')
 
         self.ButtonG = ttk.Button(top, command=lambda: self.clickButton1("gbk"))
         self.ButtonG.place(relx=0.5, rely=0.250, height=40, width = 150)
         self.ButtonG.configure(text='''GenBank genome''')
 
+        # results
+        self.substratesList = ["None"]
+        self.Label4 = ttk.Label(top)
+        self.Label4.place(relx=0.29, rely=0.33, height=40, width = 150)
+        self.Label4.configure(text='''Select substrate:''')
+        self.selectedSubstrate = tk.StringVar(top)
+        self.selectedSubstrate.set("-")
+        self.Menu = tk.OptionMenu(top, self.selectedSubstrate, *self.substratesList)
+        self.Menu.place(relx=0.5, rely=0.330, height=40, width = 150)
+        self.selectedSubstrate.trace("w", self.showSubstrate)
+
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
-        self.Text1.place(relx=0.034, rely=0.425, relheight=0.45, relwidth=0.907)
+        self.Text1.place(relx=0.034, rely=0.425, relheight=0.55, relwidth=0.907)
         self.Text1.configure(background="white")
         self.Text1.configure(font="Consolas 10")
         self.textHsb = ttk.Scrollbar(self.Text1, orient="horizontal", command=self.Text1.xview)
         self.textHsb.pack(side="bottom", fill="x")
         self.Text1.configure(xscrollcommand=self.textHsb.set)
-
-        self.Text2 = tk.scrolledtext.ScrolledText(top, wrap="none")
-        self.Text2.place(relx=0.034, rely=0.885, relheight=0.08, relwidth=0.907)
-        self.Text2.configure(background="white")
-        self.Text2.configure(font="Consolas 10")
-        self.textHsb1 = ttk.Scrollbar(self.Text2, orient="horizontal", command=self.Text2.xview)
-        self.textHsb1.pack(side="bottom", fill="x")
-        self.Text2.configure(xscrollcommand=self.textHsb1.set)
 
 
 if __name__ == '__main__':
