@@ -5,7 +5,6 @@
 #  in conjunction with Tcl version 8.6
 #    Apr 04, 2020 05:55:16 PM CEST  platform: Windows NT
 
-import sys
 from tkinter import scrolledtext
 from tkinter import filedialog
 
@@ -16,7 +15,6 @@ py3 = True
 
 import gui_support
 from main import *
-import os
 
 
 def vp_start_gui():
@@ -54,6 +52,17 @@ def destroy_Toplevel1():
 class Toplevel1:
     global genomeResults
     genomeResults = {}
+    global modularityDict
+    modularityDict = {}
+
+    def fillModularity(self):
+        dct = {}
+        f = open("modularityDescription.txt", "r", encoding="utf-8")
+        currentKey = ""
+        for line in f:
+            if line[0].isdigit(): currentKey = line.replace("\n", "")
+            else: dct[currentKey] = line.replace("\n", "").replace(u'\xa0', ' ')
+        return dct
 
     def validUserEval(self, userEval):
         try:
@@ -71,7 +80,17 @@ class Toplevel1:
         except:
             return 5
 
-    def clickButton1(self, type):
+    def validUserDist(self, userDist):
+        try:
+            a = int(userDist)
+            if a >= 1:
+                return a
+            else:
+                return 5
+        except:
+            return 10
+
+    def browseButtonSubmit(self, type):
         userSequence = self.Entry1.get()
         self.Entry1.delete(0, tk.END)
         selectedButton = gui_support.selectedButton.get()
@@ -83,14 +102,17 @@ class Toplevel1:
             self.Entry1.insert(0, "processing")
             userOut = self.validUserOut(self.EntryOutfmt.get())
             userEval = self.validUserEval(self.EntryEval.get())
+            userDist = self.validUserDist(self.EntryDist.get())
             print(userOut, userEval)
             self.ComboBox["values"] = ["None"]
             self.ComboBox.current(0)
             self.Text1.delete(1.0, tk.END)
+            self.Text2.delete(1.0, tk.END)
+            self.modularityDict = self.fillModularity()
             if type == "fasta":
                 genomeSearch(userSequence)
                 proteinBLAST("queryTempSequence.txt", eval=userEval)
-                resList = searchPULs()
+                resList = searchPULs(maxDist=userDist)
                 self.genomeResults = resList
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
@@ -101,7 +123,7 @@ class Toplevel1:
             elif type == "gbk":
                 gbkGenomeSearch(userSequence)
                 proteinBLAST("queryTempSequence.txt", eval=userEval)
-                resList = searchPULs()
+                resList = searchPULs(maxDist=userDist)
                 self.genomeResults = resList
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
@@ -142,15 +164,23 @@ class Toplevel1:
                 self.Text2.insert("insert", x + " ")
 
     def writePULs(self, substrate):
+        self.Text2.delete(1.0, tk.END)
+        for key in self.modularityDict.keys():
+            if substrate == key[key.index(" ")+1 : ]:
+                self.Text2.insert("insert", key + " " + self.modularityDict[key] + "\n")
+
         self.Text1.delete(1.0, tk.END)
         self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
         for pul in self.genomeResults:
             self.Text1.insert("insert", "-PUL match details-" + "\n")
             for record in pul:
-                self.Text1.insert("insert", record.query + "\n")
+                cnt = 0
                 for alignment in record.alignments:
                     currentSubstrate = alignment.hit_def.split("|")[3].strip()
-                    if currentSubstrate != substrate and currentSubstrate != "General": break
+                    if currentSubstrate != substrate and substrate != "Everything": break
+                    if cnt == 0:
+                        self.Text1.insert("insert", record.query + "\n")
+                        cnt += 1
                     self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
                     for hsp in alignment.hsps:
                         self.Text1.insert("insert",
@@ -178,13 +208,15 @@ class Toplevel1:
         for string in substrates:
             if string.strip() == "General": continue
             temp.append(string)
+        temp.append("Everything")
         self.ComboBox["values"] = temp
 
     def showSubstrate(self, *args):
         # print(self.ComboBox.current())
         # print(self.ComboBox["values"][self.ComboBox.current()])
         # print(self.ComboBox["values"])
-        self.writePULs((self.ComboBox["values"][self.ComboBox.current()]))
+        val = self.ComboBox["values"][self.ComboBox.current()]
+        if val.lower() != "none": self.writePULs(val)
 
     def askopenfile(self):
         a = tk.filedialog.askopenfilename(title="Select file")
@@ -227,16 +259,22 @@ class Toplevel1:
         self.Label3.place(relx=0.234, rely=0.15, height=30, width=50)
         self.Label3.configure(text='''Evalue*:''')
 
+        self.EntryDist = ttk.Entry(top)
+        self.EntryDist.place(relx=0.57, rely=0.155, height=20, relwidth=0.1)
+        self.Label5 = ttk.Label(top)
+        self.Label5.place(relx=0.434, rely=0.15, height=30, width=80)
+        self.Label5.configure(text='''Max distance*:''')
+
         self.Label4 = ttk.Label(top)
-        self.Label4.place(relx=0.484, rely=0.15, height=30, width=60)
+        self.Label4.place(relx=0.811, rely=0.15, height=30, width=60)
         self.Label4.configure(text='''(*optional)''')
 
         # input type
-        self.ButtonF = ttk.Button(top, command=lambda: self.clickButton1("fasta"))
+        self.ButtonF = ttk.Button(top, command=lambda: self.browseButtonSubmit("fasta"))
         self.ButtonF.place(relx=0.25, rely=0.250, height=40, width = 150)
         self.ButtonF.configure(text='''FASTA genome''')
 
-        self.ButtonG = ttk.Button(top, command=lambda: self.clickButton1("gbk"))
+        self.ButtonG = ttk.Button(top, command=lambda: self.browseButtonSubmit("gbk"))
         self.ButtonG.place(relx=0.5, rely=0.250, height=40, width = 150)
         self.ButtonG.configure(text='''GenBank genome''')
 
@@ -253,12 +291,25 @@ class Toplevel1:
         self.ComboBox.place(relx=0.5, rely=0.330, height=40, width=150)
 
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
-        self.Text1.place(relx=0.034, rely=0.425, relheight=0.55, relwidth=0.907)
+        self.Text1.place(relx=0.034, rely=0.425, relheight=0.45, relwidth=0.907)
         self.Text1.configure(background="white")
         self.Text1.configure(font="Consolas 10")
         self.textHsb = ttk.Scrollbar(self.Text1, orient="horizontal", command=self.Text1.xview)
         self.textHsb.pack(side="bottom", fill="x")
         self.Text1.configure(xscrollcommand=self.textHsb.set)
+
+        self.Text2 = tk.scrolledtext.ScrolledText(top, wrap="none")
+        self.Text2.place(relx=0.034, rely=0.885, relheight=0.08, relwidth=0.907)
+        self.Text2.configure(background="white")
+        self.Text2.configure(font="Consolas 10")
+        self.textHsb1 = ttk.Scrollbar(self.Text2, orient="horizontal", command=self.Text2.xview)
+        self.textHsb1.pack(side="bottom", fill="x")
+        self.Text2.configure(xscrollcommand=self.textHsb1.set)
+
+        # self.Text2.delete(1.0, tk.END)
+        # for x in substrates:
+        #     if x.strip() != "General" and len(x) > 3:
+        #         self.Text2.insert("insert", x + " ")
 
 
 if __name__ == '__main__':

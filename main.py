@@ -138,12 +138,12 @@ def searchPULs(maxDist = 10):
             temp.append(blast_record)
         if len(blast_record.alignments) > 1:
             maxAlignment = blast_record.alignments[0]
-            sumScore1 = sum([hsp.bits for hsp in blast_record.alignments[0].hsps])
-            for alignment in blast_record.alignments:
-                sumScore2 = sum([hsp.bits for hsp in alignment.hsps])
-                if sumScore2 > sumScore1:
-                    maxAlignment = alignment
-                    sumScore1 = sumScore2
+            # sumScore1 = sum([hsp.bits for hsp in blast_record.alignments[0].hsps])
+            # for alignment in blast_record.alignments:
+            #     sumScore2 = sum([hsp.bits for hsp in alignment.hsps])
+            #     if sumScore2 > sumScore1:
+            #         maxAlignment = alignment
+            #         sumScore1 = sumScore2
             blast_record.alignments = [maxAlignment]
             temp.append(blast_record)
     blast_records = temp
@@ -152,12 +152,12 @@ def searchPULs(maxDist = 10):
     for i in range(0, len(blast_records)):
         for alignment in blast_records[i].alignments:
             if i+1 == len(blast_records): break
-            if alignment.hit_def.split("|")[2] == "SusC":
+            if "susc" in alignment.hit_def.split("|")[2].lower():
                 for alignment2 in blast_records[i+1].alignments:
-                    if alignment2.hit_def.split("|")[2] == "SusD": possiblePULs.add((i, i+1))
-            elif alignment.hit_def.split("|")[2] == "SusD":
+                    if "susd" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i+1))
+            elif "susd" in alignment.hit_def.split("|")[2].lower():
                 for alignment2 in blast_records[i+1].alignments:
-                    if alignment2.hit_def.split("|")[2] == "SusC": possiblePULs.add((i, i+1))
+                    if "susc" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i+1))
     # widen window around SusCD pairs
     foundPULs = [] # [(Sus, Sus), (lowI, highI)]
     for candidate in possiblePULs:
@@ -185,7 +185,8 @@ def searchPULs(maxDist = 10):
 
 
 def countSubstrateExamples():
-    file = open("izClankovZAccZimeni.fasta")
+    #file = open("izClankovZAccZimeni.fasta")
+    file = open("PULDB_merged.fasta")
     cnt = 0
     examples = {}
     for line in file:
@@ -195,6 +196,7 @@ def countSubstrateExamples():
             if substrate in examples.keys(): examples[substrate] += 1
             else: examples[substrate] = 1
     print(examples)
+    for key in examples.keys(): print(str(key) + ": " + str(examples[key]))
     print(cnt)
     print(sum([examples[key] for key in examples.keys()]))
 
@@ -205,8 +207,8 @@ def countSubstrateExamples():
 if __name__ == '__main__':
     #resultsBLASTwrite("protein")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
-    #searchPULs()
-    countSubstrateExamples()
+    searchPULs()
+    #countSubstrateExamples()
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\Prevotella_sp._AGR2160.gbkU")
     # genomeSearch("B_ovatusGenome.fna")
@@ -214,7 +216,7 @@ if __name__ == '__main__':
 
     #proteinBLAST("queryTemp.txt")
 
-    # proteinBLAST("queryTempSequence.txt")
+    proteinBLAST("queryTempSequence.txt")
     # resultsBLASTwrite("protein")
 
 
