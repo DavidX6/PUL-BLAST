@@ -7,6 +7,8 @@
 
 from tkinter import scrolledtext
 from tkinter import filedialog
+import webbrowser
+import os
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -86,7 +88,7 @@ class Toplevel1:
             if a >= 1:
                 return a
             else:
-                return 5
+                return 10
         except:
             return 10
 
@@ -118,6 +120,7 @@ class Toplevel1:
                 self.Entry1.insert(0, "processed")
                 #self.writePULs()
                 self.fillOptions()
+                webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
             elif type == "gbk":
@@ -129,6 +132,7 @@ class Toplevel1:
                 self.Entry1.insert(0, "processed")
                 #self.writePULs()
                 self.fillOptions()
+                webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
             else:

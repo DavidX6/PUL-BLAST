@@ -1,0 +1,38 @@
+<head>
+    <link href="collection.css" rel="stylesheet">
+    <link href="fileinput.min.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" src="bootstrap.min.css" />
+</head>
+
+<body>
+    <h3 class="text-center">Select a BLAST output file</h3>
+    <div class="input-group" style="padding: 40px;">
+        
+        <div tabindex="500" class="form-control file-caption  kv-fileinput-caption">
+            <div class="file-caption-name"></div>
+        </div>
+        <div class="input-group-btn">
+            <button type="button" tabindex="500" title="Clear selected files" class="btn btn-default fileinput-remove fileinput-remove-button"><span class="hidden-xs">Remove</span></button>
+            <div tabindex="500" class="btn btn-primary btn-file">
+                <span class="hidden-xs">Browse</span>
+                <input data-show-preview="false" data-show-upload="false" class="file" style="display:inline;" type="file" id="blastinput">
+            </div>
+        </div>
+    </div>
+    <div id="blast-multiple-alignments"></div>
+    <div id="blast-alignments-table"></div>
+    <div id="blast-single-alignment"></div>
+
+    <script type="text/javascript" src="html2canvas.js"></script>
+    <script type="text/javascript" src="blasterjs.js"></script>
+    <script type="text/javascript">
+        var blasterjs = require("biojs-vis-blasterjs");
+        var instance = new blasterjs({
+            input: "blastinput",
+            multipleAlignments: "blast-multiple-alignments",
+            alignmentsTable: "blast-alignments-table",
+            singleAlignment: "blast-single-alignment"
+        });
+
+    </script>
+</body>

@@ -30,3 +30,11 @@ a <- hist(x = seqlens)
 min(seqlens)
 which(seqlens == min(seqlens))
 seqs[[61]]
+
+#
+seqs <- read.fasta(file = "../PULDB_merged.fasta", seqtype = "AA", seqonly = TRUE, whole.header = TRUE)
+seqlens <- nchar(seqs)
+a <- hist(x = seqlens)
+min(seqlens)
+which(seqlens == min(seqlens))
+seqs[[138]]

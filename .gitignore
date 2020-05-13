@@ -1,0 +1,59 @@
+/IRP BF članki Accetto/
+/build/
+/prevotele_iz_clanka_tabelaPULs/
+/kablammo-master/
+/SimpleSynteny_LATEST/
+/.idea/
+/__pycache__/
+/CAZy utils/Scraper/Agar_25076.fasta
+/CAZy utils/Scraper/Agar_Porphyran_25078.fasta
+/CAZy utils/Scraper/Arabinogalactan_32782.fasta
+/CAZy utils/Scraper/Barley beta-glucan[269]_269.fasta
+/CAZy utils/Scraper/Barley beta-glucan[302]_302.fasta
+/CAZy utils/Scraper/Beta-glucan_33551.fasta
+/CAZy utils/Scraper/bt0262.html
+/CAZy utils/Scraper/bt0263.html
+/CAZy utils/Scraper/Complex xylans_33573.fasta
+/CAZy utils/Scraper/Galactomannan_293.fasta
+/CAZy utils/Scraper/High mannose mammalian N-glycan_32849.fasta
+/CAZy utils/Scraper/Homogalacturonan_351.fasta
+/CAZy utils/Scraper/Homogalacturonan_Rhamnogalacturonan-I_33608.fasta
+/CAZy utils/Scraper/Levan_32799.fasta
+/CAZy utils/Scraper/Mucin O-glycans_32848.fasta
+/CAZy utils/Scraper/Rhamnogalacturonan-I_32854.fasta
+/CAZy utils/Scraper/Rhamnogalacturonan-II[32869]_32869.fasta
+/CAZy utils/Scraper/Rhamnogalacturonan-II[32870]_32870.fasta
+/CAZy utils/Scraper/Simple xylans_33593.fasta
+/CAZy utils/Scraper/Starches_32843.fasta
+/CAZy utils/Scraper/Wheat arabinoxylan_oat spelt xylan[324]_324.fasta
+/CAZy utils/Scraper/Wheat arabinoxylan_oat spelt xylan[344]_344.fasta
+/CAZy utils/Scraper/Xyloglucan[364]_364.fasta
+/CAZy utils/Scraper/Xyloglucan[33613]_33613.fasta
+/CAZy utils/Scraper/Yeast alpha-mannan[32846]_32846.fasta
+/CAZy utils/Scraper/Yeast alpha-mannan[32868]_32868.fasta
+B_ceccaeGenome.fasta
+B_ovatusGenome.fna
+BlastRecord.png
+CAZy utils/.RData
+CAZy utils/.Rhistory
+CAZy utils/10000+.jpeg
+CAZy utils/10000.jpeg
+CAZy utils/2000.jpeg
+CAZy utils/5000.jpeg
+CAZy utils/AsNumCAZy.txt
+CAZy utils/CAZy raw.7z
+CAZy utils/CAZyDB.07312019.fa
+CAZy utils/getseqflat.pdf
+"CAZy utils/Scraper/Barley\ beta-glucan[269]_269.fasta"
+"CAZy utils/Scraper/Barley\ beta-glucan[302]_302.fasta"
+"CAZy utils/Scraper/Rhamnogalacturonan-II[32869]_32869.fasta"
+"CAZy utils/Scraper/Rhamnogalacturonan-II[32870]_32870.fasta"
+"CAZy utils/Scraper/Wheat arabinoxylan_oat spelt xylan[324]_324.fasta"
+"CAZy utils/Scraper/Wheat arabinoxylan_oat spelt xylan[344]_344.fasta"
+"CAZy utils/Scraper/Xyloglucan[33613]_33613.fasta"
+"CAZy utils/Scraper/Xyloglucan[364]_364.fasta"
+"CAZy utils/Scraper/Yeast alpha-mannan[32846]_32846.fasta"
+"CAZy utils/Scraper/Yeast alpha-mannan[32868]_32868.fasta"
+"CAZy utils/Scraper/Barley beta-glucan[269]_269.fasta"
+*.fasta
+*.txt

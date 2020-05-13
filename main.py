@@ -5,8 +5,6 @@ import Bio.SeqRecord
 from Bio.Alphabet import IUPAC
 from Bio.Blast import NCBIXML
 
-#db_name = "LinCAZyp"
-#db_name = "LinClanki"
 db_name = "clankiDB"
 """
 genome search
