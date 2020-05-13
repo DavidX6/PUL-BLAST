@@ -1,3 +1,7 @@
+//Blanco-Míguez A, Fdez-Riverola F, SánchezB, Lourenço A (2018) BlasterJS: 
+//A novel interactive JavaScript visualisation component for BLAST alignment results. 
+//PLoS ONE 13(10): e0205286. https://doi.org/10.1371/journal.pone.0205286
+
 require = (function e(t, n, r) {
     function s(o, u) {
         if (!n[o]) {
