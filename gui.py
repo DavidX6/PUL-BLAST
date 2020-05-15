@@ -114,7 +114,6 @@ class Toplevel1:
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "processed")
                 self.fillOptions()
-                webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
 
@@ -176,6 +175,15 @@ class Toplevel1:
         gui_support.selectedButton.set(0)
         gui_support.selectedGenus.set(0)
 
+    def extraFeatures(self, command):
+        if command == "export":
+            f = tk.filedialog.asksaveasfile(mode='w', defaultextension=".txt")
+            if f is not None:
+                results = self.Text1.get("1.0", tk.END)
+                f.write(results)
+                f.close()
+        elif command == "open": webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
+
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
@@ -188,11 +196,11 @@ class Toplevel1:
         # file selection
         self.Label1 = ttk.Label(top)
         self.Label1.place(relx=0.032, rely=0.029, height=37, width=220)
-        self.Label1.configure(text='''Select sequence file or enter path''')
+        self.Label1.configure(text="Select sequence file or enter path")
 
         self.Button1 = ttk.Button(top, command=self.askopenfile)
         self.Button1.place(relx=0.811, rely=0.09, height=33, width=80)
-        self.Button1.configure(text='''Browse''')
+        self.Button1.configure(text="Browse")
 
         self.Entry1 = ttk.Entry(top)
         self.Entry1.place(relx=0.034, rely=0.09, height=34, relwidth=0.761)
@@ -202,38 +210,38 @@ class Toplevel1:
         self.EntryOutfmt.place(relx=0.12, rely=0.155, height=20, relwidth=0.1)
         self.Label2 = ttk.Label(top)
         self.Label2.place(relx=0.034, rely=0.15, height=30, width=50)
-        self.Label2.configure(text='''Outfmt*:''')
+        self.Label2.configure(text="Outfmt*:")
 
         self.EntryEval = ttk.Entry(top)
         self.EntryEval.place(relx=0.32, rely=0.155, height=20, relwidth=0.1)
         self.Label3 = ttk.Label(top)
         self.Label3.place(relx=0.234, rely=0.15, height=30, width=50)
-        self.Label3.configure(text='''Evalue*:''')
+        self.Label3.configure(text="Evalue*:")
 
         self.EntryDist = ttk.Entry(top)
         self.EntryDist.place(relx=0.57, rely=0.155, height=20, relwidth=0.1)
         self.Label5 = ttk.Label(top)
         self.Label5.place(relx=0.434, rely=0.15, height=30, width=80)
-        self.Label5.configure(text='''Max distance*:''')
+        self.Label5.configure(text="Max distance*:")
 
         self.Label4 = ttk.Label(top)
         self.Label4.place(relx=0.811, rely=0.15, height=30, width=60)
-        self.Label4.configure(text='''(*optional)''')
+        self.Label4.configure(text="(*optional)")
 
-        # input type
+        # input type button
         self.ButtonF = ttk.Button(top, command=lambda: self.browseButtonSubmit("fasta"))
         self.ButtonF.place(relx=0.25, rely=0.250, height=40, width = 150)
-        self.ButtonF.configure(text='''FASTA genome''')
+        self.ButtonF.configure(text="FASTA genome")
 
         self.ButtonG = ttk.Button(top, command=lambda: self.browseButtonSubmit("gbk"))
         self.ButtonG.place(relx=0.5, rely=0.250, height=40, width = 150)
-        self.ButtonG.configure(text='''GenBank genome''')
+        self.ButtonG.configure(text="GenBank genome")
 
-        # results
+        # results display
         self.substratesList = ["None"]
         self.Label4 = ttk.Label(top)
         self.Label4.place(relx=0.29, rely=0.33, height=40, width = 150)
-        self.Label4.configure(text='''Select substrate:''')
+        self.Label4.configure(text="Select substrate:")
 
         self.ComboBox = ttk.Combobox(top, state="readonly")
         self.ComboBox["values"] = self.substratesList
@@ -257,10 +265,13 @@ class Toplevel1:
         self.textHsb1.pack(side="bottom", fill="x")
         self.Text2.configure(xscrollcommand=self.textHsb1.set)
 
-        # self.Text2.delete(1.0, tk.END)
-        # for x in substrates:
-        #     if x.strip() != "General" and len(x) > 3:
-        #         self.Text2.insert("insert", x + " ")
+        # extra features
+        self.ButtonExport = ttk.Button(top, command=lambda: self.extraFeatures("export"))
+        self.ButtonExport.place(relx=0.82, rely=0.425, height=40, width=100)
+        self.ButtonExport.configure(text="Export")
+        self.ButtonOpen = ttk.Button(top, command=lambda: self.extraFeatures("open"))
+        self.ButtonOpen.place(relx=0.82, rely=0.50, height=40, width=100)
+        self.ButtonOpen.configure(text="Browse BLAST \n       results")
 
 
 if __name__ == '__main__':
