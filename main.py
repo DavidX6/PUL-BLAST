@@ -136,14 +136,10 @@ def searchPULs(maxDist = 10):
             temp.append(blast_record)
         if len(blast_record.alignments) > 1:
             maxAlignment = blast_record.alignments[0]
-            # sumScore1 = sum([hsp.bits for hsp in blast_record.alignments[0].hsps])
-            # for alignment in blast_record.alignments:
-            #     sumScore2 = sum([hsp.bits for hsp in alignment.hsps])
-            #     if sumScore2 > sumScore1:
-            #         maxAlignment = alignment
-            #         sumScore1 = sumScore2
             blast_record.alignments = [maxAlignment]
-            temp.append(blast_record)
+            queryCover = 0
+            for hsp in maxAlignment.hsps: queryCover += hsp.query_end - hsp.query_start
+            if queryCover > maxAlignment.length/2: temp.append(blast_record)
     blast_records = temp
     # get indexes of SusCD pairs
     possiblePULs = set()
@@ -176,6 +172,7 @@ def searchPULs(maxDist = 10):
     for pul in foundPULs:
         borderLow = pul[1][0]
         borderHigh = pul[1][1]
+        print(borderHigh-borderLow)
         PULrecords.append([blast_records[i] for i in range(borderLow, borderHigh+1)])
     return PULrecords
 
@@ -214,7 +211,7 @@ if __name__ == '__main__':
 
     #proteinBLAST("queryTemp.txt")
 
-    proteinBLAST("queryTempSequence.txt")
+    #proteinBLAST("queryTempSequence.txt")
     # resultsBLASTwrite("protein")
 
 

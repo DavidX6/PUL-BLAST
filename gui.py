@@ -140,8 +140,8 @@ class Toplevel1:
                         self.Text1.insert("insert",
                                           "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
                         self.Text1.insert("insert", "\t" + "Identities: " +
-                                          str("{:.2f}".format(hsp.align_length/hsp.identities)) + "% (" +str(hsp.identities) + "), gaps: " +
-                                          str(hsp.gaps) + "\n")
+                                          str("{:.2f}".format(hsp.identities*100/hsp.align_length)) + "% (" +str(hsp.identities) + "), gaps: " +
+                                          str(hsp.gaps) +"\n")
                         self.Text1.insert("insert", "\t" + "Query range: " + str(hsp.query_start) + "-" + str(
                             hsp.query_end) + "\n")
                         self.Text1.insert("insert", "\t" + "Match range: " + str(hsp.sbjct_start) + "-" + str(
@@ -199,7 +199,7 @@ class Toplevel1:
         self.Label1.configure(text="Select sequence file or enter path")
 
         self.Button1 = ttk.Button(top, command=self.askopenfile)
-        self.Button1.place(relx=0.811, rely=0.09, height=33, width=80)
+        self.Button1.place(relx=0.82, rely=0.09, height=33, width=80)
         self.Button1.configure(text="Browse")
 
         self.Entry1 = ttk.Entry(top)
