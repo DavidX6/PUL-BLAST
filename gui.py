@@ -67,37 +67,28 @@ class Toplevel1:
         return dct
 
     def validUserEval(self, userEval):
-        try:
-            return float(userEval)
-        except:
-            return 0.001
+        try: return float(userEval)
+        except: return 0.001
 
     def validUserOut(self, userOut):
         try:
             a = int(userOut)
             if a >= 0 and a <= 11:
                 return a
-            else:
-                return 5
-        except:
-            return 5
+            else: return 5
+        except: return 5
 
     def validUserDist(self, userDist):
         try:
             a = int(userDist)
             if a >= 1:
                 return a
-            else:
-                return 10
-        except:
-            return 10
+            else: return 10
+        except: return 10
 
     def browseButtonSubmit(self, type):
         userSequence = self.Entry1.get()
         self.Entry1.delete(0, tk.END)
-        selectedButton = gui_support.selectedButton.get()
-        # print(userSequence)
-        # print(selectedButton)
         if len(userSequence) < 1 or userSequence == "processing" or userSequence == "No sequence":
             self.Entry1.insert(0, "No sequence")
         else:
@@ -105,67 +96,27 @@ class Toplevel1:
             userOut = self.validUserOut(self.EntryOutfmt.get())
             userEval = self.validUserEval(self.EntryEval.get())
             userDist = self.validUserDist(self.EntryDist.get())
-            print(userOut, userEval)
+            print(userOut, userEval, userOut)
             self.ComboBox["values"] = ["None"]
             self.ComboBox.current(0)
             self.Text1.delete(1.0, tk.END)
             self.Text2.delete(1.0, tk.END)
             self.modularityDict = self.fillModularity()
-            if type == "fasta":
-                genomeSearch(userSequence)
-                proteinBLAST("queryTempSequence.txt", eval=userEval)
-                resList = searchPULs(maxDist=userDist)
-                self.genomeResults = resList
-                self.Entry1.delete(0, tk.END)
-                self.Entry1.insert(0, "processed")
-                #self.writePULs()
-                self.fillOptions()
-                webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
-                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
-                                              outfile="UserRequestedBLASTres.txt")
-            elif type == "gbk":
-                gbkGenomeSearch(userSequence)
-                proteinBLAST("queryTempSequence.txt", eval=userEval)
-                resList = searchPULs(maxDist=userDist)
-                self.genomeResults = resList
-                self.Entry1.delete(0, tk.END)
-                self.Entry1.insert(0, "processed")
-                #self.writePULs()
-                self.fillOptions()
-                webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
-                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
-                                              outfile="UserRequestedBLASTres.txt")
-            else:
+            if type not in ["gbk", "fasta"]:
                 self.Entry1.delete(0, tk.END)
                 self.Entry1.insert(0, "no type selected")
-
-    def writeBlast(self, type):
-        substrates = set()
-        for key in self.genomeResults[type].keys():
-            try:
-                lng = len(self.genomeResults[type][key])
-                if lng > 0:
-                    self.Text1.insert("insert", key + ", " + str(lng) + " result(s) \n")
-                    for i in range(0, lng):
-                        writeout = "\t" + self.genomeResults[type][key][i]["name"] \
-                                   + "\n" \
-                                   + "\t" + "E value: " + str(self.genomeResults[type][key][i]["eval"]) \
-                                   + ", score: " + str(self.genomeResults[type][key][i]["score"]) + "\n" \
-                                   + "\t" + self.genomeResults[type][key][i]["query"] + "\n" \
-                                   + "\t" + self.genomeResults[type][key][i]["match"] + "\n" \
-                                   + "\t" + self.genomeResults[type][key][i]["subject"] + "\n"
-                        substrate = self.genomeResults[type][key][i]["name"].split("|")[-1]
-                        substrates.add(substrate)
-                        self.Text1.insert("insert", writeout)
-                        self.Text1.insert("insert", "\n")
-                    self.Text1.insert("insert", "\n")
-            except Exception as e:
-                # print(e)
-                pass
-        self.Text2.delete(1.0, tk.END)
-        for x in substrates:
-            if x.strip() != "General" and len(x) > 3:
-                self.Text2.insert("insert", x + " ")
+            else:
+                if type == "fasta": genomeSearch(userSequence)
+                else: gbkGenomeSearch(userSequence)
+                proteinBLAST("queryTempSequence.txt", eval=userEval)
+                resList = searchPULs(maxDist=userDist)
+                self.genomeResults = resList
+                self.Entry1.delete(0, tk.END)
+                self.Entry1.insert(0, "processed")
+                self.fillOptions()
+                webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
+                if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
+                                              outfile="UserRequestedBLASTres.txt")
 
     def writePULs(self, substrate):
         self.Text2.delete(1.0, tk.END)
@@ -200,7 +151,6 @@ class Toplevel1:
                         self.Text1.insert("insert", "\t" + hsp.match + "\n")
                         self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
                         self.Text1.insert("insert", "\n")
-                # self.Text1.insert("insert", "\n")
             self.Text1.insert("insert", "\n")
 
     def fillOptions(self):
@@ -216,9 +166,6 @@ class Toplevel1:
         self.ComboBox["values"] = temp
 
     def showSubstrate(self, *args):
-        # print(self.ComboBox.current())
-        # print(self.ComboBox["values"][self.ComboBox.current()])
-        # print(self.ComboBox["values"])
         val = self.ComboBox["values"][self.ComboBox.current()]
         if val.lower() != "none": self.writePULs(val)
 
@@ -233,7 +180,7 @@ class Toplevel1:
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
 
-        top.geometry("693x635+781+143")
+        top.geometry("893x659")
         top.minsize(148, 1)
         top.maxsize(1924, 1055)
         top.resizable(1, 1)
@@ -295,7 +242,7 @@ class Toplevel1:
         self.ComboBox.place(relx=0.5, rely=0.330, height=40, width=150)
 
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
-        self.Text1.place(relx=0.034, rely=0.425, relheight=0.45, relwidth=0.907)
+        self.Text1.place(relx=0.034, rely=0.425, relheight=0.45, relwidth=0.750)
         self.Text1.configure(background="white")
         self.Text1.configure(font="Consolas 10")
         self.textHsb = ttk.Scrollbar(self.Text1, orient="horizontal", command=self.Text1.xview)
@@ -303,7 +250,7 @@ class Toplevel1:
         self.Text1.configure(xscrollcommand=self.textHsb.set)
 
         self.Text2 = tk.scrolledtext.ScrolledText(top, wrap="none")
-        self.Text2.place(relx=0.034, rely=0.885, relheight=0.08, relwidth=0.907)
+        self.Text2.place(relx=0.034, rely=0.885, relheight=0.08, relwidth=0.750)
         self.Text2.configure(background="white")
         self.Text2.configure(font="Consolas 10")
         self.textHsb1 = ttk.Scrollbar(self.Text2, orient="horizontal", command=self.Text2.xview)
