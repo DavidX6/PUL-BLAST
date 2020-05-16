@@ -172,8 +172,17 @@ def searchPULs(maxDist = 10):
     for pul in foundPULs:
         borderLow = pul[1][0]
         borderHigh = pul[1][1]
-        print(borderHigh-borderLow)
-        PULrecords.append([blast_records[i] for i in range(borderLow, borderHigh+1)])
+        # vsi puli morajo imeti iste vrste efektorje, vendar ne iste sus
+        temp = [blast_records[i] for i in range(borderLow, borderHigh+1)]
+        subs = set()
+        names = set()
+        for i in range(borderLow, borderHigh+1):
+            names.add("susc" in blast_records[i].alignments[0].hit_def.split("|")[2].lower() or
+                      "susd" in blast_records[i].alignments[0].hit_def.split("|")[2].lower())
+            if i not in pul[0]:
+                subs.add(blast_records[i].alignments[0].hit_def.split("|")[3])
+        if len(names) == 1: continue
+        if len(subs) < 2: PULrecords.append(temp)
     return PULrecords
 
 

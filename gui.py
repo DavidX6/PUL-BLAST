@@ -9,6 +9,7 @@ from tkinter import scrolledtext
 from tkinter import filedialog
 import webbrowser
 import os
+import re
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -88,11 +89,10 @@ class Toplevel1:
 
     def browseButtonSubmit(self, type):
         userSequence = self.Entry1.get()
-        self.Entry1.delete(0, tk.END)
         if len(userSequence) < 1 or userSequence == "processing" or userSequence == "No sequence":
+            self.Entry1.delete(0, tk.END)
             self.Entry1.insert(0, "No sequence")
         else:
-            self.Entry1.insert(0, "processing")
             userOut = self.validUserOut(self.EntryOutfmt.get())
             userEval = self.validUserEval(self.EntryEval.get())
             userDist = self.validUserDist(self.EntryDist.get())
@@ -111,31 +111,30 @@ class Toplevel1:
                 proteinBLAST("queryTempSequence.txt", eval=userEval)
                 resList = searchPULs(maxDist=userDist)
                 self.genomeResults = resList
-                self.Entry1.delete(0, tk.END)
-                self.Entry1.insert(0, "processed")
                 self.fillOptions()
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
 
     def writePULs(self, substrate):
-        self.Text2.delete(1.0, tk.END)
-        for key in self.modularityDict.keys():
-            if substrate == key[key.index(" ")+1 : ]:
-                self.Text2.insert("insert", key + " " + self.modularityDict[key] + "\n")
-
+        # write out hits originating from given substrate
         self.Text1.delete(1.0, tk.END)
         self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
+        descriptions = []
         for pul in self.genomeResults:
             self.Text1.insert("insert", "-PUL match details-" + "\n")
             for record in pul:
                 cnt = 0
                 for alignment in record.alignments:
                     currentSubstrate = alignment.hit_def.split("|")[3].strip()
-                    if currentSubstrate != substrate and substrate != "Everything": break
+                    if currentSubstrate != substrate and substrate != "Everything"\
+                            and "susc" not in alignment.hit_def.lower()\
+                            and "susd" not in alignment.hit_def.lower():
+                        break
                     if cnt == 0:
                         self.Text1.insert("insert", record.query + "\n")
                         cnt += 1
                     self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
+
                     for hsp in alignment.hsps:
                         self.Text1.insert("insert",
                                           "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
@@ -150,7 +149,34 @@ class Toplevel1:
                         self.Text1.insert("insert", "\t" + hsp.match + "\n")
                         self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
                         self.Text1.insert("insert", "\n")
+
+                    descriptions.append([alignment.hit_def,
+                                         [str("{:.2f}".format(hsp.identities*100/hsp.align_length)) for hsp in alignment.hsps],
+                                         record.query])
             self.Text1.insert("insert", "\n")
+        # write out modularity and completeness
+        self.Text2.delete(1.0, tk.END)
+        for key in self.modularityDict.keys():
+            if substrate == key[(key.index(" ") + 1):]:
+                self.Text2.insert("insert", key + " ")
+                temp = self.modularityDict[key].split(" ")
+                if len(temp) % 2 != 0: print("warning", temp, len(temp))
+                temp2 = []
+                for i in range(0, len(temp), 2):
+                    if i + 1 < len(temp): temp2.append(temp[i] + temp[i+1])
+
+                for gene in temp2:
+                    if "unk" in gene: continue
+                    self.Text2.insert("insert", gene + " ")
+                    for hit in descriptions:
+                        if gene.lower().replace("◀", "").replace("▶", "") in hit[0].split("|")[2].lower().replace(" ", "").split(","):
+                            if "susc" in gene.lower() or "susd" in gene.lower():
+                                self.Text2.insert("insert", "\u259A " + "%, ".join(hit[1]) + "%, " + hit[2] + " from " + hit[0].split("|")[3].strip() + " \u259E ")
+                            else:
+                                self.Text2.insert("insert", "\u259A " + "%, ".join(hit[1]) + "%, " + hit[2] + " \u259E ")
+                self.Text2.insert("insert","\n")
+                #self.Text2.insert("insert", key + " " + self.modularityDict[key] + "\n")
+
 
     def fillOptions(self):
         substrates = set()
@@ -179,8 +205,7 @@ class Toplevel1:
         if command == "export":
             f = tk.filedialog.asksaveasfile(mode='w', defaultextension=".txt")
             if f is not None:
-                results = self.Text1.get("1.0", tk.END)
-                f.write(results)
+                f.write(self.Text1.get("1.0", tk.END) + "\n" + self.Text2.get("1.0", tk.END))
                 f.close()
         elif command == "open": webbrowser.open('file://' + os.path.realpath("javascript/index.html"), new=1)
 
