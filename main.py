@@ -168,7 +168,7 @@ def searchPULs(maxDist = 10):
         if borderHigh == max(candidate) and borderLow == min(candidate):continue
         foundPULs.append([(candidate), (borderLow, borderHigh)])
 
-    PULrecords = []
+    PULrecords = {}
     for pul in foundPULs:
         borderLow = pul[1][0]
         borderHigh = pul[1][1]
@@ -182,7 +182,7 @@ def searchPULs(maxDist = 10):
             if i not in pul[0]:
                 subs.add(blast_records[i].alignments[0].hit_def.split("|")[3])
         if len(names) == 1: continue
-        if len(subs) < 2: PULrecords.append(temp)
+        if len(subs) < 2: PULrecords[subs.pop()] = temp
     return PULrecords
 
 

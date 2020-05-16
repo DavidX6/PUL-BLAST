@@ -1,20 +1,30 @@
+# run as: python py2exe.py build
 from cx_Freeze import setup, Executable
-import os.path
-
-PYTHON_INSTALL_DIR = os.path.dirname(os.path.dirname(os.__file__))
-os.environ['TCL_LIBRARY'] = os.path.join(PYTHON_INSTALL_DIR, 'tcl', 'tcl8.6')
-os.environ['TK_LIBRARY'] = os.path.join(PYTHON_INSTALL_DIR, 'tcl', 'tk8.6')
-
-include_files = [os.path.join(PYTHON_INSTALL_DIR, 'DLLs', 'tk86t.dll'),
-		 os.path.join(PYTHON_INSTALL_DIR, 'DLLs', 'tcl86t.dll')]
+import os
+import shutil
 
 setup(
     name='PUL BLAST',
-    description='A brief description of your program.',
     version='1',
-    options={'build_exe': {'include_files': include_files, "includes":["tkinter", "Bio", "xml"]}},
+    options={'build_exe': {"includes": ["tkinter", "Bio", "xml"]}},
     executables=[Executable('gui.py',
-    targetName='pulBlast.exe',
-    copyright='Copyright (C) <name> 2018',
-    base='Win32GUI')]
+                            targetName='pulBlast.exe',
+                            copyright='David Miškić',
+                            base='Win32GUI')]
 )
+if os.path.isdir("build\exe.win32-3.8\lib\Tkinter"):
+    try:
+        os.rename("build/exe.win32-3.8/lib/Tkinter", "build/exe.win32-3.8/lib/tkinter")
+    except Exception as e:
+        print(e)
+        print("Renaming Tkinter folder failed. Check manually.")
+
+try:
+    shutil.copytree(src="javascript", dst="build\exe.win32-3.8\javascript")
+    shutil.copyfile(src="clankiDB.phr", dst="build\exe.win32-3.8\clankiDB.phr")
+    shutil.copyfile(src="clankiDB.pin", dst="build\exe.win32-3.8\clankiDB.pin")
+    shutil.copyfile(src="clankiDB.psq", dst="build\exe.win32-3.8\clankiDB.psq")
+    shutil.copyfile(src="modularityDescription.txt", dst="build\exe.win32-3.8\modularityDescription.txt")
+except Exception as e:
+    print(e)
+    print("Copying additional files failed. Check manually.")

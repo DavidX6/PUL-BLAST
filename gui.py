@@ -120,39 +120,38 @@ class Toplevel1:
         self.Text1.delete(1.0, tk.END)
         self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
         descriptions = []
-        for pul in self.genomeResults:
+        for record in self.genomeResults[substrate]:
             self.Text1.insert("insert", "-PUL match details-" + "\n")
-            for record in pul:
-                cnt = 0
-                for alignment in record.alignments:
-                    currentSubstrate = alignment.hit_def.split("|")[3].strip()
-                    if currentSubstrate != substrate and substrate != "Everything"\
-                            and "susc" not in alignment.hit_def.lower()\
-                            and "susd" not in alignment.hit_def.lower():
-                        break
-                    if cnt == 0:
-                        self.Text1.insert("insert", record.query + "\n")
-                        cnt += 1
-                    self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
+            cnt = 0
+            for alignment in record.alignments:
+                # currentSubstrate = alignment.hit_def.split("|")[3].strip()
+                # if currentSubstrate != substrate and substrate != "Everything"\
+                #         and "susc" not in alignment.hit_def.lower()\
+                #         and "susd" not in alignment.hit_def.lower():
+                #     break
+                if cnt == 0:
+                    self.Text1.insert("insert", record.query + "\n")
+                    cnt += 1
+                self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
 
-                    for hsp in alignment.hsps:
-                        self.Text1.insert("insert",
-                                          "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
-                        self.Text1.insert("insert", "\t" + "Identities: " +
-                                          str("{:.2f}".format(hsp.identities*100/hsp.align_length)) + "% (" +str(hsp.identities) + "), gaps: " +
-                                          str(hsp.gaps) +"\n")
-                        self.Text1.insert("insert", "\t" + "Query range: " + str(hsp.query_start) + "-" + str(
-                            hsp.query_end) + "\n")
-                        self.Text1.insert("insert", "\t" + "Match range: " + str(hsp.sbjct_start) + "-" + str(
-                            hsp.sbjct_end) + "\n")
-                        self.Text1.insert("insert", "\t" + hsp.query + "\n")
-                        self.Text1.insert("insert", "\t" + hsp.match + "\n")
-                        self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
-                        self.Text1.insert("insert", "\n")
+                for hsp in alignment.hsps:
+                    self.Text1.insert("insert",
+                                      "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
+                    self.Text1.insert("insert", "\t" + "Identities: " +
+                                      str("{:.2f}".format(hsp.identities*100/hsp.align_length)) + "% (" +str(hsp.identities) + "), gaps: " +
+                                      str(hsp.gaps) +"\n")
+                    self.Text1.insert("insert", "\t" + "Query range: " + str(hsp.query_start) + "-" + str(
+                        hsp.query_end) + "\n")
+                    self.Text1.insert("insert", "\t" + "Match range: " + str(hsp.sbjct_start) + "-" + str(
+                        hsp.sbjct_end) + "\n")
+                    self.Text1.insert("insert", "\t" + hsp.query + "\n")
+                    self.Text1.insert("insert", "\t" + hsp.match + "\n")
+                    self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
+                    self.Text1.insert("insert", "\n")
 
-                    descriptions.append([alignment.hit_def,
-                                         [str("{:.2f}".format(hsp.identities*100/hsp.align_length)) for hsp in alignment.hsps],
-                                         record.query])
+                descriptions.append([alignment.hit_def,
+                                     [str("{:.2f}".format(hsp.identities*100/hsp.align_length)) for hsp in alignment.hsps],
+                                     record.query])
             self.Text1.insert("insert", "\n")
         # write out modularity and completeness
         self.Text2.delete(1.0, tk.END)
@@ -170,23 +169,25 @@ class Toplevel1:
                     self.Text2.insert("insert", gene + " ")
                     for hit in descriptions:
                         if gene.lower().replace("◀", "").replace("▶", "") in hit[0].split("|")[2].lower().replace(" ", "").split(","):
-                            if "susc" in gene.lower() or "susd" in gene.lower():
-                                self.Text2.insert("insert", "\u259A " + "%, ".join(hit[1]) + "%, " + hit[2] + " from " + hit[0].split("|")[3].strip() + " \u259E ")
-                            else:
-                                self.Text2.insert("insert", "\u259A " + "%, ".join(hit[1]) + "%, " + hit[2] + " \u259E ")
-                self.Text2.insert("insert","\n")
-                #self.Text2.insert("insert", key + " " + self.modularityDict[key] + "\n")
+                            if "susc" in gene.lower() or "susd" in gene.lower(): pass
+                            #     self.Text2.insert("insert", "\u259A " + "%, ".join(hit[1]) + "%, " + hit[2] + " from " + hit[0].split("|")[3].strip() + " \u259E ")
+                            else: self.Text2.insert("insert", ":: " + "%, ".join(hit[1]) + "%, " + hit[2].split("|")[0] + " \u25FE")
+                    self.Text2.insert("insert", "\n")
+                #self.Text2.insert("insert","\n")
 
 
     def fillOptions(self):
-        substrates = set()
-        for pul in self.genomeResults:
-            for record in pul:
-                for alignment in record.alignments: substrates.add(alignment.hit_def.split("|")[3].strip())
-        temp = []
-        for string in substrates:
-            if string.strip() == "General": continue
-            temp.append(string)
+        # substrates = set()
+        # for pul in self.genomeResults:
+        #     for record in pul:
+        #         for alignment in record.alignments:
+        #             if "susd" not in alignment.hit_def.split("|")[2].lower() and "susc" not in alignment.hit_def.split("|")[2].lower():
+        #                 substrates.add(alignment.hit_def.split("|")[3].strip())
+        # temp = []
+        # for string in substrates:
+        #     if string.strip() == "General": continue
+        #     temp.append(string)
+        temp = list(self.genomeResults.keys())
         temp.append("Everything")
         self.ComboBox["values"] = temp
 
@@ -275,7 +276,7 @@ class Toplevel1:
         self.ComboBox.place(relx=0.5, rely=0.330, height=40, width=150)
 
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
-        self.Text1.place(relx=0.034, rely=0.425, relheight=0.45, relwidth=0.750)
+        self.Text1.place(relx=0.034, rely=0.405, relheight=0.45, relwidth=0.750)
         self.Text1.configure(background="white")
         self.Text1.configure(font="Consolas 10")
         self.textHsb = ttk.Scrollbar(self.Text1, orient="horizontal", command=self.Text1.xview)
@@ -283,7 +284,7 @@ class Toplevel1:
         self.Text1.configure(xscrollcommand=self.textHsb.set)
 
         self.Text2 = tk.scrolledtext.ScrolledText(top, wrap="none")
-        self.Text2.place(relx=0.034, rely=0.885, relheight=0.08, relwidth=0.750)
+        self.Text2.place(relx=0.034, rely=0.865, relheight=0.12, relwidth=0.750)
         self.Text2.configure(background="white")
         self.Text2.configure(font="Consolas 10")
         self.textHsb1 = ttk.Scrollbar(self.Text2, orient="horizontal", command=self.Text2.xview)
