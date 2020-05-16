@@ -188,7 +188,6 @@ class Toplevel1:
         #     if string.strip() == "General": continue
         #     temp.append(string)
         temp = list(self.genomeResults.keys())
-        temp.append("Everything")
         self.ComboBox["values"] = temp
 
     def showSubstrate(self, *args):
@@ -204,7 +203,9 @@ class Toplevel1:
 
     def extraFeatures(self, command):
         if command == "export":
-            f = tk.filedialog.asksaveasfile(mode='w', defaultextension=".txt")
+            file = tk.filedialog.asksaveasfilename(defaultextension=".txt")
+            print(file)
+            f = open(file, "w", encoding="utf-8")
             if f is not None:
                 f.write(self.Text1.get("1.0", tk.END) + "\n" + self.Text2.get("1.0", tk.END))
                 f.close()
