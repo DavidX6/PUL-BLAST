@@ -59,6 +59,7 @@ class Toplevel1:
     modularityDict = {}
 
     def fillModularity(self):
+        """reads modularity file in format <name> \n <description>"""
         dct = {}
         f = open("modularityDescription.txt", "r", encoding="utf-8")
         currentKey = ""
@@ -74,16 +75,14 @@ class Toplevel1:
     def validUserOut(self, userOut):
         try:
             a = int(userOut)
-            if a >= 0 and a <= 11:
-                return a
+            if a >= 0 and a <= 11: return a
             else: return 5
         except: return 5
 
     def validUserDist(self, userDist):
         try:
             a = int(userDist)
-            if a >= 1:
-                return a
+            if a >= 1: return a
             else: return 10
         except: return 10
 
@@ -115,65 +114,67 @@ class Toplevel1:
                 if userOut != 5: proteinBLAST("queryTempSequence.txt", eval=userEval, format=userOut,
                                               outfile="UserRequestedBLASTres.txt")
 
+
     def writePULs(self, substrate):
         # write out hits originating from given substrate
         self.Text1.delete(1.0, tk.END)
-        self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
-        descriptions = []
-        for record in self.genomeResults[substrate]:
-            self.Text1.insert("insert", "-PUL match details-" + "\n")
-            cnt = 0
-            for alignment in record.alignments:
-                # currentSubstrate = alignment.hit_def.split("|")[3].strip()
-                # if currentSubstrate != substrate and substrate != "Everything"\
-                #         and "susc" not in alignment.hit_def.lower()\
-                #         and "susd" not in alignment.hit_def.lower():
-                #     break
-                if cnt == 0:
-                    self.Text1.insert("insert", record.query + "\n")
-                    cnt += 1
-                self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
-
-                for hsp in alignment.hsps:
-                    self.Text1.insert("insert",
-                                      "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
-                    self.Text1.insert("insert", "\t" + "Identities: " +
-                                      str("{:.2f}".format(hsp.identities*100/hsp.align_length)) + "% (" +str(hsp.identities) + "), gaps: " +
-                                      str(hsp.gaps) +"\n")
-                    self.Text1.insert("insert", "\t" + "Query range: " + str(hsp.query_start) + "-" + str(
-                        hsp.query_end) + "\n")
-                    self.Text1.insert("insert", "\t" + "Match range: " + str(hsp.sbjct_start) + "-" + str(
-                        hsp.sbjct_end) + "\n")
-                    self.Text1.insert("insert", "\t" + hsp.query + "\n")
-                    self.Text1.insert("insert", "\t" + hsp.match + "\n")
-                    self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
-                    self.Text1.insert("insert", "\n")
-
-                descriptions.append([alignment.hit_def,
-                                     [str("{:.2f}".format(hsp.identities*100/hsp.align_length)) for hsp in alignment.hsps],
-                                     record.query])
-            self.Text1.insert("insert", "\n")
-        # write out modularity and completeness
         self.Text2.delete(1.0, tk.END)
-        for key in self.modularityDict.keys():
-            if substrate == key[(key.index(" ") + 1):]:
-                self.Text2.insert("insert", key + " ")
-                temp = self.modularityDict[key].split(" ")
-                if len(temp) % 2 != 0: print("warning", temp, len(temp))
-                temp2 = []
-                for i in range(0, len(temp), 2):
-                    if i + 1 < len(temp): temp2.append(temp[i] + temp[i+1])
+        # self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
 
-                for gene in temp2:
-                    if "unk" in gene: continue
-                    self.Text2.insert("insert", gene + " ")
-                    for hit in descriptions:
-                        if gene.lower().replace("◀", "").replace("▶", "") in hit[0].split("|")[2].lower().replace(" ", "").split(","):
-                            if "susc" in gene.lower() or "susd" in gene.lower(): pass
-                            #     self.Text2.insert("insert", "\u259A " + "%, ".join(hit[1]) + "%, " + hit[2] + " from " + hit[0].split("|")[3].strip() + " \u259E ")
-                            else: self.Text2.insert("insert", ":: " + "%, ".join(hit[1]) + "%, " + hit[2].split("|")[0] + " \u25FE")
-                    self.Text2.insert("insert", "\n")
-                #self.Text2.insert("insert","\n")
+        for pul in self.genomeResults[substrate]:
+            descriptions = []
+            self.Text1.insert("insert", "-PUL match details-" + "\n")
+            for record in pul:
+                cnt = 0
+                for alignment in record.alignments:
+                    if cnt == 0:
+                        self.Text1.insert("insert", record.query + "\n")
+                        cnt += 1
+                    self.Text1.insert("insert", "\t" + alignment.hit_def + "\n")
+
+                    for hsp in alignment.hsps:
+                        self.Text1.insert("insert",
+                                          "\t" + "Bit score: " + str(hsp.bits) + ", evalue: " + str(hsp.expect) + "\n")
+                        self.Text1.insert("insert", "\t" + "Identities: " +
+                                          str("{:.2f}".format(hsp.identities*100/hsp.align_length)) + "% (" +str(hsp.identities) + "), gaps: " +
+                                          str(hsp.gaps) +"\n")
+                        self.Text1.insert("insert", "\t" + "Query range: " + str(hsp.query_start) + "-" + str(
+                            hsp.query_end) + "\n")
+                        self.Text1.insert("insert", "\t" + "Match range: " + str(hsp.sbjct_start) + "-" + str(
+                            hsp.sbjct_end) + "\n")
+                        self.Text1.insert("insert", "\t" + hsp.query + "\n")
+                        self.Text1.insert("insert", "\t" + hsp.match + "\n")
+                        self.Text1.insert("insert", "\t" + hsp.sbjct + "\n")
+                        self.Text1.insert("insert", "\n")
+
+                    descriptions.append([alignment.hit_def,
+                                         [str("{:.2f}".format(hsp.identities*100/hsp.align_length)) for hsp in alignment.hsps],
+                                         record.query])
+                self.Text1.insert("insert", "\n")
+            # write out modularity and completeness
+            for key in self.modularityDict.keys():
+                if substrate == key[(key.index(" ") + 1):]:
+                    self.Text2.insert("insert", key + "\n")
+                    temp = self.modularityDict[key].split(" ")
+                    if len(temp) % 2 != 0: print("warning", temp, len(temp))
+                    temp2 = []
+                    for i in range(0, len(temp), 2):
+                        if i + 1 < len(temp): temp2.append(temp[i] + temp[i + 1])
+                    for gene in temp2:
+                        if "unk" in gene: continue
+                        self.Text2.insert("insert", gene + " ")
+                        for hit in descriptions:
+                            if gene.lower().replace("◀", "").replace("▶", "") in hit[0].split("|")[2].lower().replace(
+                                    " ", "").split(","):
+                                if "susc" in gene.lower() or "susd" in gene.lower():
+                                    pass
+                                else:
+                                    self.Text2.insert("insert", ":: " + "%, ".join(hit[1]) + "%, " + hit[2].split("|")[
+                                        0] + " \u25FE")
+                        self.Text2.insert("insert", "\n")
+
+
+
 
 
     def fillOptions(self):
@@ -255,7 +256,7 @@ class Toplevel1:
         self.Label4.place(relx=0.811, rely=0.15, height=30, width=60)
         self.Label4.configure(text="(*optional)")
 
-        # input type button
+        # input type buttons
         self.ButtonF = ttk.Button(top, command=lambda: self.browseButtonSubmit("fasta"))
         self.ButtonF.place(relx=0.25, rely=0.250, height=40, width = 150)
         self.ButtonF.configure(text="FASTA genome")

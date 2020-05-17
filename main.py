@@ -39,17 +39,14 @@ def genomeSearch(fileName, cutoff = 140):
     # read sequence from file
     inputSequenceObject = Bio.SeqIO.read(fileName, "fasta", IUPAC.unambiguous_dna)
     sequence = inputSequenceObject.seq
-    revComSequence = inputSequenceObject.seq.reverse_complement()
     # RNA from DNA
     sequenceRNA = sequence.transcribe()
-    revComSequenceRNA = revComSequence.transcribe()
     # protein from RNA
     sequenceProt = sequenceRNA.translate(table="Bacterial")  # stop_symbol="@"
-    revComSequenceProt = revComSequenceRNA.translate(table="Bacterial")
     # write out possible proteins, blast searches with every entry
     toSearchSequence = sequenceProt.split("*")
     file = open("queryTempSequence.txt", "w")
-    cnt = 0
+    cnt = 0 # tracking order of writing
     for i in range(0, len(toSearchSequence)):
         item = toSearchSequence[i]
         if len(item) > cutoff:
@@ -72,6 +69,7 @@ def proteinBLAST(proteinFile, eval = 0.001, format = 5, outfile = "resultsPyP.tx
     # print(blastp_cline)
     stdout, stderr = blastp_cline()
 
+
 def nucleotideBLAST(geneFile, eval = 0.001, format = 5, outfile = "resultsPyN.txt"):
     blastn_cline = Bio.Blast.Applications.NcbiblastxCommandline(
         evalue = eval,
@@ -82,47 +80,92 @@ def nucleotideBLAST(geneFile, eval = 0.001, format = 5, outfile = "resultsPyN.tx
     )
     # print(blastn_cline)
     stdout, stderr = blastn_cline()
-
-def resultsBLASTwrite(type):
+"""
+DATA PROCESSING
+"""
+def resultsBLASTwrite(substrate, maxDist = 10):
     # open results file
-    if type == "protein": result_handle = open("resultsPyP.txt")
-    else: result_handle = open("resultsPyN.txt")
+    blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
+    # make PULs
+    possiblePULs = set()
+    for i in range(0, len(blast_records)):
+        blast_records[i].originalIndex = i
+        if len(blast_records[i].alignments) == 0: continue
+        alignment = blast_records[i].alignments[0] # SusCD should be best hit
+        queryCover = 0
+        for hsp in alignment.hsps: queryCover += hsp.query_end - hsp.query_start
+        if queryCover > alignment.length / 2: continue
+        if i + 1 == len(blast_records): break
+        if "susc" in alignment.hit_def.split("|")[2].lower():
+            for alignment2 in blast_records[i + 1].alignments:
+                if "susd" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
+        elif "susd" in alignment.hit_def.split("|")[2].lower():
+            for alignment2 in blast_records[i + 1].alignments:
+                if "susc" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
 
-    matchesBacteroides = {}
-    matchesPrevotella = {}
-    matchesOther = {}
+    # widen until same kind of substate hit can be found in hits
+    foundPULs = []  # [(Sus, Sus), (lowI, highI)]
+    for candidate in possiblePULs:
+        borderLow = min(candidate)
+        borderHigh = max(candidate)
+        # to increase border, same substrate hit must be next to it
+        while borderLow - 1 != 0:
+            # if distance from SusCD is larger than allowed
+            if abs(blast_records[borderLow - 1].originalIndex - blast_records[
+                min(candidate)].originalIndex) > maxDist: break
+            # if we found next SusCD
+            check = True
+            if len(blast_records[borderLow - 1].alignments) > 0:
+                for alignment in blast_records[borderLow - 1].alignments:
+                    if "susc" in alignment.hit_def.split("|")[2].lower() or "susd" in alignment.hit_def.split("|")[2].lower():
+                        check = False
+                        break
+            if check == False: break
+            # if substrate is not in new hits
+            substratesInAligments = [alignment.hit_def.split("|")[-1] for alignment in blast_records[borderLow-1].alignments]
+            if substrate not in substratesInAligments and len(substratesInAligments) > 0: break
+            borderLow = borderLow - 1
 
-    blast_records = NCBIXML.parse(result_handle)
-    E_VALUE_THRESH = 0.0001
-    for blast_record in blast_records:
-        # print("****NEW QUERY****", blast_record.query, ",number of matches:", len(blast_record.alignments))
-        matchesBacteroides[blast_record.query] = []
-        matchesPrevotella[blast_record.query] = []
-        matchesOther[blast_record.query] = []
-        for alignment in blast_record.alignments:
-            for hsp in alignment.hsps:
-                species = alignment.title.split("|")[3]
-                species = species.split(" ")[0]
-                accNum = alignment.hit_def.split("|")[0]
-                # gaps|ids|positives / "length":hsp.align_length za procente
-                temphitdef = {"species": species, "name": alignment.hit_def, "accnum": accNum, "length": hsp.align_length,
-                              "eval": hsp.expect,
-                              "gaps": hsp.gaps, "identities": hsp.identities, "query": hsp.query, "match": hsp.match,
-                              "subject": hsp.sbjct,
-                              "score": hsp.score, "positives": hsp.positives}
-                if species == "Bacteroides": matchesBacteroides[blast_record.query].append(temphitdef)
-                elif species == "Prevotella": matchesPrevotella[blast_record.query].append(temphitdef)
-                else: matchesOther[blast_record.query].append(temphitdef)
-                # if hsp.expect < E_VALUE_THRESH:
-                #     print("****Alignment****", "ID:" ,blast_record.query)
-                #     print("sequence:", alignment.title)
-                #     # print("length:", alignment.length)
-                #     print("e value:", hsp.expect)
-                #     # print("query:", hsp.query)
-                #     # print("matches:", hsp.match)
-                #     # print("subject:", hsp.sbjct)
-                #     # print("gaps:", hsp.gaps)
-    return {"B":matchesBacteroides, "P":matchesPrevotella, "O": matchesOther}
+        while borderHigh + 1 != len(blast_records):
+            if abs(blast_records[borderHigh + 1].originalIndex - blast_records[
+                max(candidate)].originalIndex) > maxDist: break
+            check = True
+            if len(blast_records[borderHigh + 1].alignments) > 0:
+                for alignment in blast_records[borderHigh + 1].alignments:
+                    if "susc" in alignment.hit_def.split("|")[2].lower() or "susd" in alignment.hit_def.split("|")[2].lower():
+                        check = False
+                        break
+            if check == False: break
+            substratesInAligments = [alignment.hit_def.split("|")[-1] for alignment in
+                                     blast_records[borderHigh + 1].alignments]
+            if substrate not in substratesInAligments and len(substratesInAligments) > 0: break
+            borderHigh = borderHigh + 1
+        if borderHigh == max(candidate) and borderLow == min(candidate): continue
+        foundPULs.append([(candidate), (borderLow, borderHigh)])
+    print(foundPULs)
+
+
+    PULrecords = {}
+    for pul in foundPULs:
+        borderLow = pul[1][0]
+        borderHigh = pul[1][1]
+        # all hits should have the same substrate, except SusCD hits
+        temp = []
+        for i in range(borderLow, borderHigh + 1):
+            newAls = []
+            print(i, ":", len(blast_records[i].alignments), end=" ,")
+            if len(blast_records[i].alignments) == 0: continue
+            if i in pul[0]: newAls.append(blast_records[i].alignments[0])
+            else:
+                for alignment in blast_records[i].alignments:
+                    if substrate in alignment.hit_def.split("|")[-1]:
+                        newAls.append(alignment)
+                        break
+            blast_records[i].alignments = newAls
+            temp.append(blast_records[i])
+        PULrecords[substrate] = temp
+        print("\n")
+    return PULrecords
 
 def searchPULs(maxDist = 10):
     blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
@@ -130,18 +173,16 @@ def searchPULs(maxDist = 10):
     cnt = 0
     # get only items with results
     for blast_record in blast_records:
-        blast_record.originalIndex = cnt
         cnt += 1
-        if len(blast_record.alignments) == 1:
-            temp.append(blast_record)
-        if len(blast_record.alignments) > 1:
-            maxAlignment = blast_record.alignments[0]
-            blast_record.alignments = [maxAlignment]
-            queryCover = 0
-            for hsp in maxAlignment.hsps: queryCover += hsp.query_end - hsp.query_start
-            if queryCover > maxAlignment.length/2: temp.append(blast_record)
+        if len(blast_record.alignments) == 0: continue
+        blast_record.originalIndex = cnt
+        maxAlignment = blast_record.alignments[0]
+        blast_record.alignments = [maxAlignment]
+        queryCover = 0
+        for hsp in maxAlignment.hsps: queryCover += hsp.query_end - hsp.query_start
+        if queryCover > maxAlignment.length/2: temp.append(blast_record)
     blast_records = temp
-    # get indexes of SusCD pairs
+    # get indexes of SusCD/DC pairs
     possiblePULs = set()
     for i in range(0, len(blast_records)):
         for alignment in blast_records[i].alignments:
@@ -159,33 +200,37 @@ def searchPULs(maxDist = 10):
         borderHigh = max(candidate)
         while borderLow-1 != 0:
             if abs(blast_records[borderLow-1].originalIndex - blast_records[min(candidate)].originalIndex) > maxDist: break
-            if blast_records[borderLow-1].alignments[0].hit_def.split("|")[2] in ["SusC", "SusD"]: break
+            if "susc" in blast_records[borderLow-1].alignments[0].hit_def.split("|")[2].lower() or \
+                    "susd" in blast_records[borderLow-1].alignments[0].hit_def.split("|")[2].lower(): break
             borderLow = borderLow - 1
         while borderHigh + 1 != len(blast_records):
             if abs(blast_records[borderHigh+1].originalIndex - blast_records[max(candidate)].originalIndex) > maxDist: break
-            if blast_records[borderHigh+1].alignments[0].hit_def.split("|")[2] in ["SusC", "SusD"]: break
+            if "susc" in blast_records[borderHigh+1].alignments[0].hit_def.split("|")[2].lower() or \
+                    "susd" in blast_records[borderHigh+1].alignments[0].hit_def.split("|")[2].lower(): break
             borderHigh = borderHigh + 1
-        if borderHigh == max(candidate) and borderLow == min(candidate):continue
+        if borderHigh == max(candidate) and borderLow == min(candidate): continue
         foundPULs.append([(candidate), (borderLow, borderHigh)])
-
+    # apply selection criteria to found PULs
     PULrecords = {}
     for pul in foundPULs:
         borderLow = pul[1][0]
         borderHigh = pul[1][1]
-        # vsi puli morajo imeti iste vrste efektorje, vendar ne iste sus
+        # all hits should have the same substrate, except SusCD hits
         temp = [blast_records[i] for i in range(borderLow, borderHigh+1)]
         subs = set()
         names = set()
         for i in range(borderLow, borderHigh+1):
             names.add("susc" in blast_records[i].alignments[0].hit_def.split("|")[2].lower() or
                       "susd" in blast_records[i].alignments[0].hit_def.split("|")[2].lower())
-            if i not in pul[0]:
+            if i not in pul[0]: # substrate not from susCD hits
                 subs.add(blast_records[i].alignments[0].hit_def.split("|")[3])
         if len(names) == 1: continue
-        if len(subs) < 2: PULrecords[subs.pop()] = temp
+        subkey = subs.pop()
+        if len(subs) < 2:
+            if subkey not in PULrecords.keys(): PULrecords[subkey] = [temp]
+            else: PULrecords[subkey].append(temp)
+
     return PULrecords
-
-
 
 
 def countSubstrateExamples():
@@ -209,9 +254,9 @@ def countSubstrateExamples():
 
 
 if __name__ == '__main__':
-    #resultsBLASTwrite("protein")
+    resultsBLASTwrite("Rhamnogalacturonan-I")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
-    searchPULs()
+    #searchPULs()
     #countSubstrateExamples()
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\Prevotella_sp._AGR2160.gbkU")
