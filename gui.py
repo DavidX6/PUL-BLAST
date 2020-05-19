@@ -95,7 +95,7 @@ class Toplevel1:
             userOut = self.validUserOut(self.EntryOutfmt.get())
             userEval = self.validUserEval(self.EntryEval.get())
             userDist = self.validUserDist(self.EntryDist.get())
-            print(userOut, userEval, userOut)
+            print(userOut, userEval, userDist)
             self.ComboBox["values"] = ["None"]
             self.ComboBox.current(0)
             self.Text1.delete(1.0, tk.END)
@@ -295,11 +295,11 @@ class Toplevel1:
 
         # extra features
         self.ButtonExport = ttk.Button(top, command=lambda: self.extraFeatures("export"))
-        self.ButtonExport.place(relx=0.82, rely=0.425, height=40, width=100)
+        self.ButtonExport.place(relx=0.82, rely=0.425, height=40, width=110)
         self.ButtonExport.configure(text="Export")
         self.ButtonOpen = ttk.Button(top, command=lambda: self.extraFeatures("open"))
-        self.ButtonOpen.place(relx=0.82, rely=0.50, height=40, width=100)
-        self.ButtonOpen.configure(text="Browse BLAST \n       results")
+        self.ButtonOpen.place(relx=0.82, rely=0.50, height=50, width=110)
+        self.ButtonOpen.configure(text="Launch BLAST\n details viewer")
 
 
 if __name__ == '__main__':
