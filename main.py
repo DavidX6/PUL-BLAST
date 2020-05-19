@@ -225,8 +225,8 @@ def searchPULs(maxDist = 10):
             if i not in pul[0]: # substrate not from susCD hits
                 subs.add(blast_records[i].alignments[0].hit_def.split("|")[3])
         if len(names) == 1: continue
-        subkey = subs.pop()
         if len(subs) < 2:
+            subkey = subs.pop()
             if subkey not in PULrecords.keys(): PULrecords[subkey] = [temp]
             else: PULrecords[subkey].append(temp)
 
