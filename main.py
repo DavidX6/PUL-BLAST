@@ -144,74 +144,6 @@ def makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist):
         if borderHigh - borderLow > 2: foundPULs.append([(candidate), (borderLow, borderHigh)])
     return foundPULs
 
-def resultsBLASTwrite(substrate, maxDist = 10):
-    # open results file
-    blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
-    # make PULs
-    possiblePULs = makePossiblePULs(blast_records)
-    # widen until SAME kind of substrate hit can be found in ANY hits
-    foundPULs = []  # [(Sus, Sus), (lowI, highI)]
-    for candidate in possiblePULs:
-        borderLow = min(candidate)
-        borderHigh = max(candidate)
-        # to increase border, same substrate hit must be next to it
-        while borderLow - 1 != 0:
-            # if distance from SusCD is now larger than allowed
-            if abs(blast_records[borderLow - 1].originalIndex - blast_records[
-                min(candidate)].originalIndex) > maxDist: break
-            # if we found next SusCD
-            check = True
-            if len(blast_records[borderLow - 1].alignments) > 0:
-                for alignment in blast_records[borderLow - 1].alignments:
-                    if "susc" in alignment.hit_def.split("|")[2].lower() or "susd" in alignment.hit_def.split("|")[2].lower():
-                        check = False
-                        break
-            if check == False: break
-            # if substrate is not in new hits
-            substratesInAlignments = [alignment.hit_def.split("|")[-1] for alignment in blast_records[borderLow-1].alignments]
-            if substrate not in substratesInAlignments and len(substratesInAlignments) > 0: break
-            borderLow = borderLow - 1
-
-        while borderHigh + 1 != len(blast_records):
-            if abs(blast_records[borderHigh + 1].originalIndex - blast_records[
-                max(candidate)].originalIndex) > maxDist: break
-            check = True
-            if len(blast_records[borderHigh + 1].alignments) > 0:
-                for alignment in blast_records[borderHigh + 1].alignments:
-                    if "susc" in alignment.hit_def.split("|")[2].lower() or "susd" in alignment.hit_def.split("|")[2].lower():
-                        check = False
-                        break
-            if check == False: break
-            substratesInAlignments = [alignment.hit_def.split("|")[-1] for alignment in
-                                     blast_records[borderHigh + 1].alignments]
-            if substrate not in substratesInAlignments and len(substratesInAlignments) > 0: break
-            borderHigh = borderHigh + 1
-        if borderHigh == max(candidate) and borderLow == min(candidate): continue
-        foundPULs.append([(candidate), (borderLow, borderHigh)])
-    print("foundPULs", foundPULs)
-
-    PULrecords = []
-    for pul in foundPULs:
-        borderLow = pul[1][0]
-        borderHigh = pul[1][1]
-        # all hits should have the same substrate, except SusCD hits
-        temp = []
-        for i in range(borderLow, borderHigh + 1):
-            newAls = []
-            #print(i, ":", len(blast_records[i].alignments), end=" ,")
-            if len(blast_records[i].alignments) == 0: continue
-            if i in pul[0]: newAls.append(blast_records[i].alignments[0])
-            else:
-                for alignment in blast_records[i].alignments:
-                    if substrate in alignment.hit_def.split("|")[-1]:
-                        newAls.append(alignment)
-                        break
-            blast_records[i].alignments = newAls
-            temp.append(blast_records[i])
-        PULrecords.append(temp)
-        #print("\n")
-    return PULrecords
-
 def searchPULs(maxDist = 10):
     blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
     temp = list()
@@ -284,7 +216,6 @@ def countSubstrateExamples():
 
 
 if __name__ == '__main__':
-    #resultsBLASTwrite("Starches")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
     searchPULs()
     #countSubstrateExamples()
