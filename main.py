@@ -4,6 +4,7 @@ import Bio.SeqIO
 import Bio.SeqRecord
 from Bio.Alphabet import IUPAC
 from Bio.Blast import NCBIXML
+import copy
 
 db_name = "clankiDB"
 """
@@ -83,18 +84,16 @@ def nucleotideBLAST(geneFile, eval = 0.001, format = 5, outfile = "resultsPyN.tx
 """
 DATA PROCESSING
 """
-def resultsBLASTwrite(substrate, maxDist = 10):
-    # open results file
-    blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
-    # make PULs
+
+def makePossiblePULs(blast_records):
     possiblePULs = set()
     for i in range(0, len(blast_records)):
         blast_records[i].originalIndex = i
         if len(blast_records[i].alignments) == 0: continue
-        alignment = blast_records[i].alignments[0] # SusCD should be best hit
+        alignment = blast_records[i].alignments[0]  # SusCD should be best hit
         queryCover = 0
         for hsp in alignment.hsps: queryCover += hsp.query_end - hsp.query_start
-        if queryCover > alignment.length / 2: continue
+        if queryCover < alignment.length / 2: continue
         if i + 1 == len(blast_records): break
         if "susc" in alignment.hit_def.split("|")[2].lower():
             for alignment2 in blast_records[i + 1].alignments:
@@ -102,15 +101,16 @@ def resultsBLASTwrite(substrate, maxDist = 10):
         elif "susd" in alignment.hit_def.split("|")[2].lower():
             for alignment2 in blast_records[i + 1].alignments:
                 if "susc" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
+    return possiblePULs
 
-    # widen until same kind of substate hit can be found in hits
+def makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist):
     foundPULs = []  # [(Sus, Sus), (lowI, highI)]
     for candidate in possiblePULs:
         borderLow = min(candidate)
         borderHigh = max(candidate)
         # to increase border, same substrate hit must be next to it
         while borderLow - 1 != 0:
-            # if distance from SusCD is larger than allowed
+            # if distance from SusCD is now larger than allowed
             if abs(blast_records[borderLow - 1].originalIndex - blast_records[
                 min(candidate)].originalIndex) > maxDist: break
             # if we found next SusCD
@@ -122,8 +122,8 @@ def resultsBLASTwrite(substrate, maxDist = 10):
                         break
             if check == False: break
             # if substrate is not in new hits
-            substratesInAligments = [alignment.hit_def.split("|")[-1] for alignment in blast_records[borderLow-1].alignments]
-            if substrate not in substratesInAligments and len(substratesInAligments) > 0: break
+            substratesInAlignments = [alignment.hit_def.split("|")[-1] for alignment in blast_records[borderLow-1].alignments]
+            if substrate not in substratesInAlignments and len(substratesInAlignments) > 0: break
             borderLow = borderLow - 1
 
         while borderHigh + 1 != len(blast_records):
@@ -136,16 +136,61 @@ def resultsBLASTwrite(substrate, maxDist = 10):
                         check = False
                         break
             if check == False: break
-            substratesInAligments = [alignment.hit_def.split("|")[-1] for alignment in
+            substratesInAlignments = [alignment.hit_def.split("|")[-1] for alignment in
                                      blast_records[borderHigh + 1].alignments]
-            if substrate not in substratesInAligments and len(substratesInAligments) > 0: break
+            if substrate not in substratesInAlignments and len(substratesInAlignments) > 0: break
+            borderHigh = borderHigh + 1
+        if borderHigh == max(candidate) and borderLow == min(candidate): continue
+        if borderHigh - borderLow > 2: foundPULs.append([(candidate), (borderLow, borderHigh)])
+    return foundPULs
+
+def resultsBLASTwrite(substrate, maxDist = 10):
+    # open results file
+    blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
+    # make PULs
+    possiblePULs = makePossiblePULs(blast_records)
+    # widen until SAME kind of substrate hit can be found in ANY hits
+    foundPULs = []  # [(Sus, Sus), (lowI, highI)]
+    for candidate in possiblePULs:
+        borderLow = min(candidate)
+        borderHigh = max(candidate)
+        # to increase border, same substrate hit must be next to it
+        while borderLow - 1 != 0:
+            # if distance from SusCD is now larger than allowed
+            if abs(blast_records[borderLow - 1].originalIndex - blast_records[
+                min(candidate)].originalIndex) > maxDist: break
+            # if we found next SusCD
+            check = True
+            if len(blast_records[borderLow - 1].alignments) > 0:
+                for alignment in blast_records[borderLow - 1].alignments:
+                    if "susc" in alignment.hit_def.split("|")[2].lower() or "susd" in alignment.hit_def.split("|")[2].lower():
+                        check = False
+                        break
+            if check == False: break
+            # if substrate is not in new hits
+            substratesInAlignments = [alignment.hit_def.split("|")[-1] for alignment in blast_records[borderLow-1].alignments]
+            if substrate not in substratesInAlignments and len(substratesInAlignments) > 0: break
+            borderLow = borderLow - 1
+
+        while borderHigh + 1 != len(blast_records):
+            if abs(blast_records[borderHigh + 1].originalIndex - blast_records[
+                max(candidate)].originalIndex) > maxDist: break
+            check = True
+            if len(blast_records[borderHigh + 1].alignments) > 0:
+                for alignment in blast_records[borderHigh + 1].alignments:
+                    if "susc" in alignment.hit_def.split("|")[2].lower() or "susd" in alignment.hit_def.split("|")[2].lower():
+                        check = False
+                        break
+            if check == False: break
+            substratesInAlignments = [alignment.hit_def.split("|")[-1] for alignment in
+                                     blast_records[borderHigh + 1].alignments]
+            if substrate not in substratesInAlignments and len(substratesInAlignments) > 0: break
             borderHigh = borderHigh + 1
         if borderHigh == max(candidate) and borderLow == min(candidate): continue
         foundPULs.append([(candidate), (borderLow, borderHigh)])
-    print(foundPULs)
+    print("foundPULs", foundPULs)
 
-
-    PULrecords = {}
+    PULrecords = []
     for pul in foundPULs:
         borderLow = pul[1][0]
         borderHigh = pul[1][1]
@@ -153,7 +198,7 @@ def resultsBLASTwrite(substrate, maxDist = 10):
         temp = []
         for i in range(borderLow, borderHigh + 1):
             newAls = []
-            print(i, ":", len(blast_records[i].alignments), end=" ,")
+            #print(i, ":", len(blast_records[i].alignments), end=" ,")
             if len(blast_records[i].alignments) == 0: continue
             if i in pul[0]: newAls.append(blast_records[i].alignments[0])
             else:
@@ -163,73 +208,58 @@ def resultsBLASTwrite(substrate, maxDist = 10):
                         break
             blast_records[i].alignments = newAls
             temp.append(blast_records[i])
-        PULrecords[substrate] = temp
-        print("\n")
+        PULrecords.append(temp)
+        #print("\n")
     return PULrecords
 
 def searchPULs(maxDist = 10):
     blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
     temp = list()
+    allSubstrates = set()
     cnt = 0
-    # get only items with results
+    # get only items with results, compute coverage
     for blast_record in blast_records:
-        cnt += 1
-        if len(blast_record.alignments) == 0: continue
-        blast_record.originalIndex = cnt
-        maxAlignment = blast_record.alignments[0]
-        blast_record.alignments = [maxAlignment]
-        queryCover = 0
-        for hsp in maxAlignment.hsps: queryCover += hsp.query_end - hsp.query_start
-        if queryCover > maxAlignment.length/2: temp.append(blast_record)
+        if len(blast_record.alignments) > 0:
+            queryCover = 0
+            newAlignments = []
+            for alignment in blast_record.alignments:
+                allSubstrates.add(alignment.hit_def.split("|")[3])
+                for hsp in alignment.hsps: queryCover += hsp.query_end - hsp.query_start
+                alignment.queryCover = queryCover/blast_record.query_length
+                if alignment.queryCover > 0.5: newAlignments.append(alignment)
+            blast_record.alignments = newAlignments
+            if len(blast_record.alignments) > 0: temp.append(blast_record)
     blast_records = temp
     # get indexes of SusCD/DC pairs
-    possiblePULs = set()
-    for i in range(0, len(blast_records)):
-        for alignment in blast_records[i].alignments:
-            if i+1 == len(blast_records): break
-            if "susc" in alignment.hit_def.split("|")[2].lower():
-                for alignment2 in blast_records[i+1].alignments:
-                    if "susd" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i+1))
-            elif "susd" in alignment.hit_def.split("|")[2].lower():
-                for alignment2 in blast_records[i+1].alignments:
-                    if "susc" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i+1))
-    # widen window around SusCD pairs
-    foundPULs = [] # [(Sus, Sus), (lowI, highI)]
-    for candidate in possiblePULs:
-        borderLow = min(candidate)
-        borderHigh = max(candidate)
-        while borderLow-1 != 0:
-            if abs(blast_records[borderLow-1].originalIndex - blast_records[min(candidate)].originalIndex) > maxDist: break
-            if "susc" in blast_records[borderLow-1].alignments[0].hit_def.split("|")[2].lower() or \
-                    "susd" in blast_records[borderLow-1].alignments[0].hit_def.split("|")[2].lower(): break
-            borderLow = borderLow - 1
-        while borderHigh + 1 != len(blast_records):
-            if abs(blast_records[borderHigh+1].originalIndex - blast_records[max(candidate)].originalIndex) > maxDist: break
-            if "susc" in blast_records[borderHigh+1].alignments[0].hit_def.split("|")[2].lower() or \
-                    "susd" in blast_records[borderHigh+1].alignments[0].hit_def.split("|")[2].lower(): break
-            borderHigh = borderHigh + 1
-        if borderHigh == max(candidate) and borderLow == min(candidate): continue
-        foundPULs.append([(candidate), (borderLow, borderHigh)])
+    possiblePULs = makePossiblePULs(blast_records)
+    # widen window around SusCD pairs until limit or next Sus
+    foundPULs = {}
+    for substrate in allSubstrates:
+        foundPULs[substrate] = makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist)
+
+    # foundPULs = [] [(Sus, Sus), (lowI, highI)]
     # apply selection criteria to found PULs
     PULrecords = {}
-    for pul in foundPULs:
-        borderLow = pul[1][0]
-        borderHigh = pul[1][1]
-        # all hits should have the same substrate, except SusCD hits
-        temp = [blast_records[i] for i in range(borderLow, borderHigh+1)]
-        subs = set()
-        names = set()
-        for i in range(borderLow, borderHigh+1):
-            names.add("susc" in blast_records[i].alignments[0].hit_def.split("|")[2].lower() or
-                      "susd" in blast_records[i].alignments[0].hit_def.split("|")[2].lower())
-            if i not in pul[0]: # substrate not from susCD hits
-                subs.add(blast_records[i].alignments[0].hit_def.split("|")[3])
-        if len(names) == 1: continue
-        if len(subs) < 2:
-            subkey = subs.pop()
-            if subkey not in PULrecords.keys(): PULrecords[subkey] = [temp]
-            else: PULrecords[subkey].append(temp)
-
+    for substrate in allSubstrates:
+        for pul in foundPULs[substrate]:
+            borderLow = pul[1][0]
+            borderHigh = pul[1][1]
+            temp = [copy.deepcopy(blast_records[i]) for i in range(borderLow, borderHigh + 1)]
+            # all hits should have the same substrate, except SusCD hits
+            for i in range(borderLow, borderHigh + 1):
+                if i in pul[0]:
+                    temp[i - borderLow].alignments = [temp[i - borderLow].alignments[0]]
+                else:  # substrate not from susCD hits
+                    substrateAligment = None
+                    for alignment in blast_records[i].alignments:
+                        if substrate == alignment.hit_def.split("|")[-1]:
+                            substrateAligment = alignment
+                            break
+                    if substrateAligment == None:
+                        print("Warning! No suitable alignments found when making PUL.")
+                    temp[i-borderLow].alignments = [substrateAligment]
+            if substrate not in PULrecords.keys(): PULrecords[substrate] = [temp]
+            else: PULrecords[substrate].append(temp)
     return PULrecords
 
 
@@ -254,9 +284,9 @@ def countSubstrateExamples():
 
 
 if __name__ == '__main__':
-    resultsBLASTwrite("Rhamnogalacturonan-I")
+    #resultsBLASTwrite("Starches")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
-    #searchPULs()
+    searchPULs()
     #countSubstrateExamples()
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\Prevotella_sp._AGR2160.gbkU")
