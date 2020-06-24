@@ -123,7 +123,13 @@ class Toplevel1:
 
         for pul in self.genomeResults[substrate]:
             descriptions = []
-            self.Text1.insert("insert", "-PUL match details-" + "\n")
+            self.Text1.insert("insert", "-PUL match details- items: " + str(len(pul)))
+            quality = []
+            for record in pul:
+                for alignment in record.alignments:
+                    quality.append(alignment.originalPosition)
+            self.Text1.insert("insert", ", quality: " + str(quality) + ", relative(lower is better): " +
+                              str("{:.2f}".format(sum(quality)/(len(pul)-2))) + "\n")
             for record in pul:
                 cnt = 0
                 for alignment in record.alignments:
