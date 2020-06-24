@@ -85,7 +85,7 @@ def nucleotideBLAST(geneFile, eval = 0.001, format = 5, outfile = "resultsPyN.tx
 DATA PROCESSING
 """
 
-def makePossiblePULs(blast_records):
+def findSusPairs(blast_records):
     possiblePULs = set()
     for i in range(0, len(blast_records)):
         blast_records[i].originalIndex = i
@@ -154,7 +154,10 @@ def searchPULs(maxDist = 10):
         if len(blast_record.alignments) > 0:
             queryCover = 0
             newAlignments = []
+            order = 0
             for alignment in blast_record.alignments:
+                alignment.originalPosition = order
+                order += 1
                 allSubstrates.add(alignment.hit_def.split("|")[3])
                 for hsp in alignment.hsps: queryCover += hsp.query_end - hsp.query_start
                 alignment.queryCover = queryCover/blast_record.query_length
@@ -163,13 +166,34 @@ def searchPULs(maxDist = 10):
             if len(blast_record.alignments) > 0: temp.append(blast_record)
     blast_records = temp
     # get indexes of SusCD/DC pairs
-    possiblePULs = makePossiblePULs(blast_records)
+    possiblePULs = findSusPairs(blast_records)
     # widen window around SusCD pairs until limit or next Sus
     foundPULs = {}
     for substrate in allSubstrates:
         foundPULs[substrate] = makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist)
-
     # foundPULs = [] [(Sus, Sus), (lowI, highI)]
+
+    # try to merge PUL if susCD on each end
+    possibleMerged = []
+    possibleMergedSub = []
+    for substrate in allSubstrates:
+        for pul1 in foundPULs[substrate]:
+            for pul2 in foundPULs[substrate]:
+                if pul1 == pul2:
+                    continue
+                # ne smeta se prekrivati...
+                elif abs(max(pul1[0]) - min(pul2[0])) < 3 and max(pul1[1]) <= min(pul2[1]):
+                    if not ([pul1, pul2] in possibleMerged or [pul2, pul1] in possibleMerged):
+                        possibleMerged.append([pul1, pul2])
+                        possibleMergedSub.append(substrate)
+    print(possibleMerged, possibleMergedSub)
+    for i in range(0, len(possibleMergedSub)):
+        pair = possibleMerged[i]
+        newPUL = [list(sum(part, ())) for part in pair]
+        newPUL = newPUL[0] + newPUL[1]
+        newPUL = [pair[0][0], (min(newPUL), max(newPUL))]
+        print(newPUL)
+        foundPULs[possibleMergedSub[i]].append(newPUL)
     # apply selection criteria to found PULs
     PULrecords = {}
     for substrate in allSubstrates:
@@ -192,6 +216,7 @@ def searchPULs(maxDist = 10):
                     temp[i-borderLow].alignments = [substrateAligment]
             if substrate not in PULrecords.keys(): PULrecords[substrate] = [temp]
             else: PULrecords[substrate].append(temp)
+
     return PULrecords
 
 
