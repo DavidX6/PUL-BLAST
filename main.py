@@ -95,11 +95,11 @@ def findSusPairs(blast_records):
         if queryCover < alignment.length / 2: continue
         if i + 1 == len(blast_records): break
         if "susc" in alignment.hit_def.split("|")[2].lower():
-            for alignment2 in blast_records[i + 1].alignments:
-                if "susd" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
+            alignment2 = blast_records[i + 1].alignments[0]
+            if "susd" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
         elif "susd" in alignment.hit_def.split("|")[2].lower():
-            for alignment2 in blast_records[i + 1].alignments:
-                if "susc" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
+            alignment2 = blast_records[i + 1].alignments[0]
+            if "susc" in alignment2.hit_def.split("|")[2].lower(): possiblePULs.add((i, i + 1))
     return possiblePULs
 
 def makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist):
