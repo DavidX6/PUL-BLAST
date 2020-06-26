@@ -7,12 +7,15 @@ from Bio import ExPASy
 from Bio import SwissProt
 
 
-db_name = "LinCAZyp"
+db_name = "clankiDB"
 # AccNumTest = "AWI10243.1"
 AccNumTest = "4V1S"
 
-# Get all accession numbers from fasta database
+"""
+FASTA(NCBI)
+"""
 def extactAccNumDBCAZy():
+    """Get all accession numbers from fasta file"""
     numbers = []
     file = open("CAZyDB.07312019.fa", "r")
     for line in file:
@@ -26,8 +29,8 @@ def extactAccNumDBCAZy():
         file.writelines(num + "\n")
     file.close()
 
-# Get all GI numbers from fasta file
 def extactGINCBI():
+    """Get all GI numbers from fasta file"""
     numbers = []
     file = open("izClankov.fasta", "r")
     cnt = 0
@@ -45,19 +48,8 @@ def extactGINCBI():
     file.close()
     print(numbers, len(numbers))
 
-# Count number of entries in fasta files from NCBI
-def justcnt():
-    cnt = 0
-    for x in range(1, 14):
-        file = open("IRP BF članki Accetto/encimi raznih PULov/" + str(x) + ".fasta", "r")
-        for line in file:
-            if line[0] == ">":
-                cnt += 1
-        file.close()
-    print(cnt)
-
-# merge AccNum with NCBI fasta
 def addAccNum():
+    """Add accession numbers to NCBI fasta sequence descriptions"""
     file = open("izClankovAccN.acc", "r")
     numbers = []
     for line in file:
@@ -78,8 +70,9 @@ def addAccNum():
     file2.close()
     print(cnt)
 
-# merge organism name with fasta
+
 def addName():
+    """Add organism name to NCBI fasta sequence descriptions"""
     file = open("izClankovTaxonomy.txt", "r")
     taxa = json.load(file)
     names = []
@@ -104,27 +97,28 @@ def addName():
     print(cnt)
 
 """
-EMBL
+ENTREZ
 """
 Entrez.email = 'A.N.Other@example.com'
 
-# Get complete record from EMBL
-def EMBLcomplete(accNum, type = "protein"):
+def EntrezComplete(accNum, type ="protein"):
+    """Get complete record from EMBL"""
     handle = Entrez.efetch(db=type, id=accNum, rettype="fasta")
     record = SeqIO.read(handle, "fasta")
     print(record)
     print(record.description)
     return record
 
-# Get only summary from EMBL
-def EMBLsummary(accNum, type = "protein"):
+def EntrezSummary(accNum, type ="protein"):
+    """Get only summary from EMBL"""
     handle = Entrez.esummary(db=type, id=accNum)
     record = Entrez.read(handle)
     print(record)
     print(record[0]["Title"])
     return record[0]["Title"]
 
-def EMBLGItoAccNum():
+def EntrezGItoAccNum():
+    """Search by GI number and request only accession numbers as result"""
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=protein&id="
     gis = ""
     file = open("GINumNCBI.txt", "r")
@@ -135,11 +129,12 @@ def EMBLGItoAccNum():
     print(gis)
     url = url + gis + "&rettype=acc"
     print(url)
+
 """
 UniProt
 """
-# Convert accesion number to UniProt ID
 def getUniProtID(accNum):
+    """Convert accession number to UniProt ID"""
     try:
         url = 'https://www.uniprot.org/uploadlists/'
         params = {
@@ -154,14 +149,14 @@ def getUniProtID(accNum):
         with urllib.request.urlopen(req) as f:
             response = f.read()
         resText = response.decode('utf-8')
-        GenBankID = resText.split("\n")[1].split("\t")[1]
-        print(GenBankID)
-        return GenBankID
+        ID = resText.split("\n")[1].split("\t")[1]
+        print(ID)
+        return ID
     except:
         print("Error in function getUniProtID!")
 
-# get uniProt xml and parse it
 def UniProtData(GenBankID):
+    """Get complete information in xml and parse it"""
     url = "https://www.uniprot.org/uniprot/" + GenBankID + ".xml"
     req = urllib.request.Request(url)
     response = urllib.request.urlopen(req).read()
@@ -190,13 +185,3 @@ def UniProtData(GenBankID):
 
 # addAccNum()
 # addName()
-
-
-
-
-
-# file = open("izClankovAccN.acc", "r")
-# s = ""
-# for x in file:
-#     s += x.strip("\n") + ","
-# print(s)

@@ -9,7 +9,6 @@ from tkinter import scrolledtext
 from tkinter import filedialog
 import webbrowser
 import os
-import re
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -119,11 +118,11 @@ class Toplevel1:
         # write out hits originating from given substrate
         self.Text1.delete(1.0, tk.END)
         self.Text2.delete(1.0, tk.END)
-        # self.Text1.insert("insert", str(len(self.genomeResults)) + " candidate PULs found" + "\n")
 
         for pul in self.genomeResults[substrate]:
             descriptions = []
             self.Text1.insert("insert", "-PUL match details- items: " + str(len(pul)))
+            # compute quality information
             quality = []
             for record in pul:
                 for alignment in record.alignments:
@@ -184,16 +183,6 @@ class Toplevel1:
 
 
     def fillOptions(self):
-        # substrates = set()
-        # for pul in self.genomeResults:
-        #     for record in pul:
-        #         for alignment in record.alignments:
-        #             if "susd" not in alignment.hit_def.split("|")[2].lower() and "susc" not in alignment.hit_def.split("|")[2].lower():
-        #                 substrates.add(alignment.hit_def.split("|")[3].strip())
-        # temp = []
-        # for string in substrates:
-        #     if string.strip() == "General": continue
-        #     temp.append(string)
         temp = list(self.genomeResults.keys())
         self.ComboBox["values"] = temp
 
@@ -284,7 +273,7 @@ class Toplevel1:
         self.ComboBox.place(relx=0.5, rely=0.330, height=40, width=150)
 
         self.Text1 = scrolledtext.ScrolledText(top, wrap="none")
-        self.Text1.place(relx=0.034, rely=0.405, relheight=0.45, relwidth=0.750)
+        self.Text1.place(relx=0.034, rely=0.405, relheight=0.45, relwidth=0.93)
         self.Text1.configure(background="white")
         self.Text1.configure(font="Consolas 10")
         self.textHsb = ttk.Scrollbar(self.Text1, orient="horizontal", command=self.Text1.xview)
@@ -301,11 +290,11 @@ class Toplevel1:
 
         # extra features
         self.ButtonExport = ttk.Button(top, command=lambda: self.extraFeatures("export"))
-        self.ButtonExport.place(relx=0.82, rely=0.425, height=40, width=110)
+        self.ButtonExport.place(relx=0.82, rely=0.865, height=30, width=110)
         self.ButtonExport.configure(text="Export")
         self.ButtonOpen = ttk.Button(top, command=lambda: self.extraFeatures("open"))
-        self.ButtonOpen.place(relx=0.82, rely=0.50, height=50, width=110)
-        self.ButtonOpen.configure(text="Launch BLAST\n details viewer")
+        self.ButtonOpen.place(relx=0.82, rely=0.92, height=30, width=110)
+        self.ButtonOpen.configure(text="BLAST viewer")
 
 
 if __name__ == '__main__':

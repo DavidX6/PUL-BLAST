@@ -9,6 +9,7 @@ class PUL: pass
 class PULmember: pass
 
 def simple_get(url):
+    """Make a HTTP GET request and return response"""
     try:
         with closing(get(url, stream=True)) as resp:
             if is_good_response(resp):
@@ -21,12 +22,14 @@ def simple_get(url):
         return None
 
 def is_good_response(resp):
+    """Check if response status is 200"""
     content_type = resp.headers['Content-Type'].lower()
     return (resp.status_code == 200
             and content_type is not None
             and content_type.find('html') > -1)
 
 def extractPUL(url):
+    """From HTML displaying PUL extract links to members, modularity and substrate"""
     response = simple_get(url)
     content = BeautifulSoup(response["content"], features="html.parser")
     table = content.select("table")[2]
@@ -47,6 +50,8 @@ def extractPUL(url):
     return newPUL
 
 def extractPULmembers(newPUL):
+    """With links to PUL members make HTTP GET requests and extract
+    their information"""
     url = "http://www.cazy.org/PULDB/"
     newPUL.members = []
     for link in newPUL.membersLinks:
@@ -80,6 +85,7 @@ def extractPULmembers(newPUL):
 
 
 def writeToFile(myPUL, substrate):
+    """Write out compiled PUL in fasta format"""
     f = open(substrate + "_" + myPUL.id + ".fasta", "w", encoding="utf-8")
     for member in myPUL.members:
         f.write(">" + member["description"] + "|" + substrate + "\n")
@@ -92,6 +98,7 @@ def writeToFile(myPUL, substrate):
     f.close()
 
 def validateFiles():
+    """Check if all fasta files are in correct format"""
     for file in os.listdir():
         if file.endswith(".fasta"):
             f = open(file, "r", encoding="utf-8")
@@ -103,6 +110,7 @@ def validateFiles():
     return True
 
 def mergeFiles():
+    """Merge all fasta files in one file"""
     merged = open("PULDB_merged.fasta", "w", encoding="utf-8")
     for file in os.listdir():
         print(file)
@@ -113,8 +121,10 @@ def mergeFiles():
     merged.close()
 
 # validateFiles()
-mergeFiles()
+# mergeFiles()
 
+
+# ----------------------
 # myPUL = extractPUL("http://www.cazy.org/PULDB/index.php?pul=293")
 # myPUL = extractPULmembers(myPUL)
 # writeToFile(myPUL, "Galactomannan")

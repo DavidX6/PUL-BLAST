@@ -11,6 +11,7 @@ db_name = "clankiDB"
 genome search
 """
 def gbkGenomeSearch(fileName):
+    """Compile a file of FASTA sequences from CDS fields in genbank file"""
     inputSequenceObject = Bio.SeqIO.read(fileName, "genbank")
     file = open("queryTempSequence.txt", "w")
     cnt = 0
@@ -37,12 +38,10 @@ def gbkGenomeSearch(fileName):
 
 
 def genomeSearch(fileName, cutoff = 140):
-    # read sequence from file
+    """Compile a file of FASTA sequences by manually translating genomic sequence"""
     inputSequenceObject = Bio.SeqIO.read(fileName, "fasta", IUPAC.unambiguous_dna)
     sequence = inputSequenceObject.seq
-    # RNA from DNA
     sequenceRNA = sequence.transcribe()
-    # protein from RNA
     sequenceProt = sequenceRNA.translate(table="Bacterial")  # stop_symbol="@"
     # write out possible proteins, blast searches with every entry
     toSearchSequence = sequenceProt.split("*")
@@ -84,8 +83,8 @@ def nucleotideBLAST(geneFile, eval = 0.001, format = 5, outfile = "resultsPyN.tx
 """
 DATA PROCESSING
 """
-
 def findSusPairs(blast_records):
+    """Make a list of all susCD/susDC repeats locations"""
     possiblePULs = set()
     for i in range(0, len(blast_records)):
         blast_records[i].originalIndex = i
@@ -104,6 +103,7 @@ def findSusPairs(blast_records):
     return possiblePULs
 
 def makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist):
+    """For each possible PUL try to increase it's borders if requested substrate hit is found"""
     foundPULs = []  # [(Sus, Sus), (lowI, highI)]
     for candidate in possiblePULs:
         borderLow = min(candidate)
@@ -113,7 +113,7 @@ def makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist):
             # if distance from SusCD is now larger than allowed
             if abs(blast_records[borderLow - 1].originalIndex - blast_records[
                 min(candidate)].originalIndex) > maxDist: break
-            # if we found next SusCD
+            # if we find next SusCD
             check = True
             if len(blast_records[borderLow - 1].alignments) > 0:
                 for alignment in blast_records[borderLow - 1].alignments:
@@ -145,11 +145,12 @@ def makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist):
     return foundPULs
 
 def searchPULs(maxDist = 10):
+    """Find all possible PULs for each substrate from BLAST results"""
     blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
     temp = list()
     allSubstrates = set()
     cnt = 0
-    # get only items with results, compute coverage
+    # filter only items with results, compute coverage
     for blast_record in blast_records:
         if len(blast_record.alignments) > 0:
             queryCover = 0
@@ -171,17 +172,13 @@ def searchPULs(maxDist = 10):
     foundPULs = {}
     for substrate in allSubstrates:
         foundPULs[substrate] = makePULBySubstrate(substrate, possiblePULs, blast_records, maxDist)
-    # foundPULs = [] [(Sus, Sus), (lowI, highI)]
-
     # try to merge PUL if susCD on each end
     possibleMerged = []
     possibleMergedSub = []
     for substrate in allSubstrates:
         for pul1 in foundPULs[substrate]:
             for pul2 in foundPULs[substrate]:
-                if pul1 == pul2:
-                    continue
-                # ne smeta se prekrivati...
+                if pul1 == pul2: continue
                 elif abs(max(pul1[0]) - min(pul2[0])) < 3 and max(pul1[1]) <= min(pul2[1]):
                     if not ([pul1, pul2] in possibleMerged or [pul2, pul1] in possibleMerged):
                         possibleMerged.append([pul1, pul2])
@@ -222,9 +219,10 @@ def searchPULs(maxDist = 10):
     testingResults(PULrecords)
     return PULrecords
 
-
+"""
+TESTING
+"""
 def countSubstrateExamples():
-    #file = open("izClankovZAccZimeni.fasta")
     file = open("PULDB_merged.fasta")
     cnt = 0
     examples = {}
