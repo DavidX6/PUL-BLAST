@@ -20,7 +20,7 @@ from main import *
 
 
 def vp_start_gui():
-    '''Starting point when module is the main routine.'''
+    """Starting point when module is the main routine."""
     global val, w, root
     root = tk.Tk()
     gui_support.set_Tk_var()
@@ -33,8 +33,8 @@ w = None
 
 
 def create_Toplevel1(rt, *args, **kwargs):
-    '''Starting point when module is imported by another module.
-       Correct form of call: 'create_Toplevel1(root, *args, **kwargs)' .'''
+    """Starting point when module is imported by another module.
+       Correct form of call: 'create_Toplevel1(root, *args, **kwargs)' ."""
     global w, w_win, root
     # rt = root
     root = rt

@@ -157,12 +157,13 @@ def searchPULs(maxDist = 10):
             newAlignments = []
             order = 0
             for alignment in blast_record.alignments:
-                alignment.originalPosition = order
-                order += 1
                 allSubstrates.add(alignment.hit_def.split("|")[3])
                 for hsp in alignment.hsps: queryCover += hsp.query_end - hsp.query_start
                 alignment.queryCover = queryCover/blast_record.query_length
-                if alignment.queryCover > 0.5: newAlignments.append(alignment)
+                if alignment.queryCover > 0.5:
+                    alignment.originalPosition = order
+                    order += 1
+                    newAlignments.append(alignment)
             blast_record.alignments = newAlignments
             if len(blast_record.alignments) > 0: temp.append(blast_record)
     blast_records = temp
