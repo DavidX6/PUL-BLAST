@@ -239,93 +239,25 @@ def countSubstrateExamples():
 
 
 def testingResults(records):
-    print(records.keys(), "\n")
     results = {"starch": [[],[]], "xylan": [[],[]], "beta-glucan": [[],[]], "xyloglucan": [[],[]],
                "galactomannan": [[],[]], "alpha-mannan": [[],[]], "homogalacturonan": [[],[]], "rhamnogalacturonan": [[],[]]
                }
     for key in records.keys():
-        if "starch" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["starch"][0] += qualities
-            results["starch"][1].append(key)
-        elif "xylan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["xylan"][0] += qualities
-            results["xylan"][1].append(key)
-        elif "beta-glucan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["beta-glucan"][0] += qualities
-            results["beta-glucan"][1].append(key)
-        elif "xyloglucan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["xyloglucan"][0] += qualities
-            results["xyloglucan"][1].append(key)
-        elif "galactomannan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["galactomannan"][0] += qualities
-            results["galactomannan"][1].append(key)
-        elif "alpha-mannan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["alpha-mannan"][0] += qualities
-            results["alpha-mannan"][1].append(key)
-        elif "homogalacturonan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["homogalacturonan"][0] += qualities
-            results["homogalacturonan"][1].append(key)
-        elif "rhamnogalacturonan" in key.lower():
-            qualities = []
-            for blast in records[key]:
-                quality = []
-                for record in blast:
-                    quality.append(record.alignments[0].originalPosition)
-                qualities.append(str("{:.2f}".format(sum(quality)/(len(blast)-2))))
-            results["rhamnogalacturonan"][0] += qualities
-            results["rhamnogalacturonan"][1].append(key)
+        for key2 in results.keys():
+            if key2 in key.lower():
+                qualities = []
+                for blast in records[key]:
+                    quality = []
+                    for record in blast:
+                        quality.append(record.alignments[0].originalPosition)
+                    print(sum([a == 0 for a in quality]) > 1, key, quality)
+                    qualities.append(str("{:.2f}".format(sum(quality) / (len(blast) - 2))))
+                results[key2][0] += qualities
+                results[key2][1].append(key)
     for key in results.keys():
         print(key, results[key][1])
         for num in results[key][0]: print(num, end=", ")
         print()
-    print()
-    for key in results.keys():
-        for num in results[key][0]: print(num, end=", ")
-        print()
-
-
 
 if __name__ == '__main__':
     #gbkGenomeSearch("prevotele_iz_članka_tabelaPULs\\Prevotella_ruminicola_23.gbk")

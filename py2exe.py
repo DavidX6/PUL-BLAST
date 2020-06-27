@@ -19,12 +19,13 @@ if os.path.isdir("build\exe.win32-3.8\lib\Tkinter"):
         print(e)
         print("Renaming Tkinter folder failed. Check manually.")
 
-try:
-    shutil.copytree(src="javascript", dst="build\exe.win32-3.8\javascript")
-    shutil.copyfile(src="clankiDB.phr", dst="build\exe.win32-3.8\clankiDB.phr")
-    shutil.copyfile(src="clankiDB.pin", dst="build\exe.win32-3.8\clankiDB.pin")
-    shutil.copyfile(src="clankiDB.psq", dst="build\exe.win32-3.8\clankiDB.psq")
-    shutil.copyfile(src="modularityDescription.txt", dst="build\exe.win32-3.8\modularityDescription.txt")
-except Exception as e:
-    print(e)
-    print("Copying additional files failed. Check manually.")
+try: shutil.copytree(src="javascript", dst="build\exe.win32-3.8\javascript")
+except Exception as e: print(e)
+try: shutil.copyfile(src="clankiDB.phr", dst="build\exe.win32-3.8\clankiDB.phr")
+except Exception as e: print(e)
+try: shutil.copyfile(src="clankiDB.pin", dst="build\exe.win32-3.8\clankiDB.pin")
+except Exception as e: print(e)
+try: shutil.copyfile(src="clankiDB.psq", dst="build\exe.win32-3.8\clankiDB.psq")
+except Exception as e: print(e)
+try: shutil.copyfile(src="modularityDescription.txt", dst="build\exe.win32-3.8\modularityDescription.txt")
+except Exception as e: print(e)

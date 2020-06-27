@@ -19,12 +19,13 @@ if os.path.isdir("build/exe.linux-x86_64-3.6/lib/Tkinter"):
         print(e)
         print("Renaming Tkinter folder failed. Check manually.")
 
-try:
-    shutil.copytree(src="javascript", dst="build/exe.linux-x86_64-3.6/javascript")
-    shutil.copyfile(src="clankiDB.phr", dst="build/exe.linux-x86_64-3.6/clankiDB.phr")
-    shutil.copyfile(src="clankiDB.pin", dst="build/exe.linux-x86_64-3.6/clankiDB.pin")
-    shutil.copyfile(src="clankiDB.psq", dst="build/exe.linux-x86_64-3.6/clankiDB.psq")
-    shutil.copyfile(src="modularityDescription.txt", dst="build/exe.linux-x86_64-3.6/modularityDescription.txt")
-except Exception as e:
-    print(e)
-    print("Copying additional files failed. Check manually.")
+try: shutil.copytree(src="javascript", dst="build/exe.linux-x86_64-3.6/javascript")
+except Exception as e: print(e)
+try: shutil.copyfile(src="clankiDB.phr", dst="build/exe.linux-x86_64-3.6/clankiDB.phr")
+except Exception as e: print(e)
+try: shutil.copyfile(src="clankiDB.pin", dst="build/exe.linux-x86_64-3.6/clankiDB.pin")
+except Exception as e: print(e)
+try: shutil.copyfile(src="clankiDB.psq", dst="build/exe.linux-x86_64-3.6/clankiDB.psq")
+except Exception as e: print(e)
+try: shutil.copyfile(src="modularityDescription.txt", dst="build/exe.linux-x86_64-3.6/modularityDescription.txt")
+except Exception as e: print(e)
