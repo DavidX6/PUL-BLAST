@@ -4,4 +4,4 @@ Application for indentification and characterisation of _Polysaccharide Utilizat
 Markers used are SusC and SusD pairs, the main principle is protein homology trough BLAST similarity.  
 Accepted inputs are annotated GenBank file or FASTA(less recommended) sequence.  
 User must provide local BLAST database, tools for building are contained partially in _PUL-BLAST/CAZy utils/Scraper/PULDBscraper.py_,
-rest is in BLAST+ program package available from NCBI.
+rest is in BLAST+ program package available from NCBI, or they can use files provided in database.zip and extract them to program folder.
