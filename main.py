@@ -149,7 +149,6 @@ def searchPULs(maxDist = 10):
     blast_records = list(NCBIXML.parse(open("resultsPyP.txt")))
     temp = list()
     allSubstrates = set()
-    cnt = 0
     # filter only items with results, compute coverage
     for blast_record in blast_records:
         if len(blast_record.alignments) > 0:
@@ -189,7 +188,7 @@ def searchPULs(maxDist = 10):
         newPUL = [list(sum(part, ())) for part in pair]
         newPUL = newPUL[0] + newPUL[1]
         newPUL = [pair[0][0], (min(newPUL), max(newPUL))]
-        print("mergedPUL:", newPUL, possibleMergedSub)
+        #print("mergedPUL:", newPUL, possibleMergedSub)
         foundPULs[possibleMergedSub[i]].append(newPUL)
     # apply selection criteria to found PULs
     PULrecords = {}
@@ -211,13 +210,13 @@ def searchPULs(maxDist = 10):
                             break
                     if substrateAligment == None:
                         valid = False
-                        print("Warning! No suitable alignments found when making PUL.", substrate, pul)
+                        #print("Warning! No suitable alignments found when making PUL.", substrate, pul)
                     else: temp[i-borderLow].alignments = [substrateAligment]
             if valid:
                 if substrate not in PULrecords.keys(): PULrecords[substrate] = [temp]
                 else: PULrecords[substrate].append(temp)
 
-    testingResults(PULrecords)
+    #testingResults(PULrecords)
     return PULrecords
 
 """
@@ -251,13 +250,14 @@ def testingResults(records):
                     quality = []
                     for record in blast:
                         quality.append(record.alignments[0].originalPosition)
-                    print(sum([a == 0 for a in quality]) > 1, key, quality)
+                    #print(sum([a == 0 for a in quality]) > 1, key, quality)
                     qualities.append(str("{:.2f}".format(sum(quality) / (len(blast) - 2))))
                 results[key2][0] += qualities
                 results[key2][1].append(key)
     for key in results.keys():
         print(key, results[key][1])
-        for num in results[key][0]: print(num, end=", ")
+        results[key][0].sort()
+        for num in results[key][0]: print(str(num).replace(".",","), end="\t")
         print()
 
 if __name__ == '__main__':
